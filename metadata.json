@@ -1,0 +1,6 @@
+{
+  "name": "TuneForge",
+  "description": "Studio Konten YouTube Musik Instrumental Berbasis AI — Generate paket konten lengkap siap upload (metadata, teks thumbnail, intro hook, prompt thumbnail 4 gaya, prompt visual & video loop)",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
