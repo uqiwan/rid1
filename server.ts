@@ -174,7 +174,22 @@ app.delete('/api/templates/:id', (req: Request, res: Response) => {
   res.json({ success: true, message: 'Template berhasil dihapus' });
 });
 
-// Users Management
+// Users Management & Google Auth
+app.post('/api/auth/google', (req: Request, res: Response) => {
+  const { email, name, avatarUrl, role, googleSub } = req.body;
+  if (!email) {
+    return res.status(400).json({ error: 'Email Google wajib disertakan.' });
+  }
+  const user = dbRepository.upsertUser({
+    email,
+    name: name || email.split('@')[0],
+    avatarUrl,
+    role: role || 'admin',
+    googleSub
+  });
+  res.json(user);
+});
+
 app.get('/api/users', (req: Request, res: Response) => {
   res.json(dbRepository.getUsers());
 });

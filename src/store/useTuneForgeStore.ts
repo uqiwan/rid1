@@ -4,6 +4,11 @@ import { Category, ContentPackage, User, PromptTemplate, AuditLog } from '../typ
 import { generateRefinedTitleVariants } from '../data/titleFormulaEngine';
 import { generateEngineeredThumbnailPrompts } from '../data/thumbnailPromptEngine';
 import { generateGoogleFlowPrompts } from '../data/googleFlowEngine';
+import { 
+  translateDurationToEnglish, 
+  translateUseCaseToEnglish, 
+  translateKeywordToEnglish 
+} from '../utils/languageTranslator';
 
 interface SystemStats {
   totalCategories: number;
@@ -17,9 +22,10 @@ interface SystemStats {
 
 interface TuneForgeState {
   // Authentication & User State
-  currentUser: User;
+  currentUser: User | null;
   isLoggedIn: boolean;
   setUserRole: (role: 'user' | 'admin') => void;
+  loginWithGoogle: (params?: { email?: string; name?: string; role?: 'user' | 'admin'; avatarUrl?: string }) => Promise<User>;
   login: () => void;
   logout: () => void;
 
@@ -92,30 +98,121 @@ interface TuneForgeState {
   clearToast: () => void;
 }
 
+const getStoredSession = (): { user: User | null; isLoggedIn: boolean } => {
+  try {
+    const raw = localStorage.getItem('tuneforge_session_user');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && parsed.id && parsed.email) {
+        return { user: parsed, isLoggedIn: true };
+      }
+    }
+  } catch (err) {
+    console.error('Failed to parse stored session:', err);
+  }
+  return { user: null, isLoggedIn: false };
+};
+
+const initialSession = getStoredSession();
+
 export const useTuneForgeStore = create<TuneForgeState>((set, get) => ({
-  currentUser: {
-    id: 'usr-demo',
-    googleSub: 'google-sub-109283746592817263',
-    email: 'uqiwan@gmail.com',
-    name: 'Uqiwan Studio',
-    avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-    role: 'admin', // Super Admin by default for Phase 3 exploration
-    createdAt: '2025-01-10T12:00:00Z',
-    lastLoginAt: '2025-11-15T09:00:00Z'
-  },
-  isLoggedIn: true,
+  currentUser: initialSession.user,
+  isLoggedIn: initialSession.isLoggedIn,
 
   setUserRole: (role) => {
-    set((state) => ({
-      currentUser: { ...state.currentUser, role }
-    }));
-    get().updateUserRoleInBackend(get().currentUser.id, role).catch(() => {});
+    set((state) => {
+      if (!state.currentUser) return state;
+      const updatedUser = { ...state.currentUser, role };
+      try {
+        localStorage.setItem('tuneforge_session_user', JSON.stringify(updatedUser));
+      } catch {}
+      return { currentUser: updatedUser };
+    });
+    const current = get().currentUser;
+    if (current) {
+      get().updateUserRoleInBackend(current.id, role).catch(() => {});
+    }
   },
 
-  login: () => set({ isLoggedIn: true }),
-  logout: () => set({ isLoggedIn: true, currentRoute: '/dashboard' }),
+  loginWithGoogle: async (params?: { email?: string; name?: string; role?: 'user' | 'admin'; avatarUrl?: string }) => {
+    const role = params?.role || 'user';
+    const email = params?.email || (role === 'admin' ? 'uqiwan@gmail.com' : 'creator@tuneforge.ai');
+    const name = params?.name || (role === 'admin' ? 'Uqiwan Admin' : 'Kreator YouTube');
+    const avatarUrl = params?.avatarUrl || '';
 
-  currentRoute: '/dashboard',
+    try {
+      const res = await fetch('/api/auth/google', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, name, role, avatarUrl })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.user) {
+          try {
+            localStorage.setItem('tuneforge_session_user', JSON.stringify(data.user));
+          } catch {}
+          set({
+            currentUser: data.user,
+            isLoggedIn: true,
+            currentRoute: '/dashboard'
+          });
+          get().showToast(`Berhasil masuk sebagai ${data.user.name}`);
+          get().fetchUsers();
+          get().fetchStats();
+          return data.user;
+        }
+      }
+    } catch (err) {
+      console.warn('Network call to /api/auth/google failed, using client session:', err);
+    }
+
+    // Fallback if backend fetch is unreachable
+    const fallbackUser: User = {
+      id: `usr-${Date.now()}`,
+      googleSub: `google-sub-${Date.now()}`,
+      email,
+      name,
+      avatarUrl: avatarUrl || '',
+      role,
+      createdAt: new Date().toISOString(),
+      lastLoginAt: new Date().toISOString()
+    };
+    try {
+      localStorage.setItem('tuneforge_session_user', JSON.stringify(fallbackUser));
+    } catch {}
+    set({
+      currentUser: fallbackUser,
+      isLoggedIn: true,
+      currentRoute: '/dashboard'
+    });
+    get().showToast(`Berhasil masuk sebagai ${fallbackUser.name}`);
+    return fallbackUser;
+  },
+
+  login: () => {
+    const session = getStoredSession();
+    if (session.user) {
+      set({ currentUser: session.user, isLoggedIn: true, currentRoute: '/dashboard' });
+    } else {
+      get().loginWithGoogle();
+    }
+  },
+
+  logout: () => {
+    try {
+      localStorage.removeItem('tuneforge_session_user');
+    } catch {}
+    set({
+      currentUser: null,
+      isLoggedIn: false,
+      currentRoute: '/login',
+      routeParam: null
+    });
+    get().showToast('Anda telah keluar dari akun.');
+  },
+
+  currentRoute: initialSession.isLoggedIn ? '/dashboard' : '/login',
   routeParam: null,
   navigate: (route, param = null) => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -374,8 +471,10 @@ export const useTuneForgeStore = create<TuneForgeState>((set, get) => ({
 
     const state = get();
     const cat = state.categories.find((c) => c.id === state.selectedCategoryId) || state.categories[0];
-    const kw = state.optionalKeyword.trim() || 'Midnight Session';
-    const cleanKw = kw.replace(/</g, '').replace(/>/g, '');
+    const rawKw = (state.optionalKeyword || '').replace(/</g, '').replace(/>/g, '').trim();
+    const cleanKw = translateKeywordToEnglish(rawKw) || (rawKw ? rawKw : 'Midnight Session');
+    const cleanDuration = translateDurationToEnglish(state.duration);
+    const cleanUseCase = translateUseCaseToEnglish(state.useCase);
 
     // Background progression timer
     const stepInterval = setInterval(() => {
@@ -402,10 +501,10 @@ export const useTuneForgeStore = create<TuneForgeState>((set, get) => ({
           subGenre: state.selectedSubGenre,
           moods: state.selectedMoods,
           preferredThumbnailStyle: state.selectedThumbnailStyle,
-          duration: state.duration,
-          useCase: state.useCase,
+          duration: cleanDuration,
+          useCase: cleanUseCase,
           optionalKeyword: cleanKw,
-          userId: state.currentUser.id
+          userId: state.currentUser?.id || 'usr-creator'
         })
       });
 
@@ -433,8 +532,8 @@ export const useTuneForgeStore = create<TuneForgeState>((set, get) => ({
       categoryName: cat.name,
       genre: state.selectedSubGenre,
       moods: state.selectedMoods,
-      duration: state.duration,
-      useCase: state.useCase,
+      duration: cleanDuration,
+      useCase: cleanUseCase,
       optionalKeyword: cleanKw
     });
 
@@ -443,8 +542,8 @@ export const useTuneForgeStore = create<TuneForgeState>((set, get) => ({
       genre: state.selectedSubGenre,
       moods: state.selectedMoods,
       preferredStyle: state.selectedThumbnailStyle,
-      duration: state.duration,
-      useCase: state.useCase,
+      duration: cleanDuration,
+      useCase: cleanUseCase,
       optionalKeyword: cleanKw
     });
 
@@ -458,7 +557,7 @@ export const useTuneForgeStore = create<TuneForgeState>((set, get) => ({
 
     const newPkg: ContentPackage = {
       id: newId,
-      userId: state.currentUser.id,
+      userId: state.currentUser?.id || 'usr-creator',
       categoryId: cat.id,
       categoryName: cat.name,
       subGenre: state.selectedSubGenre,

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Sparkles, Compass, HelpCircle, Layers, LogIn, LayoutDashboard, Wand2 } from 'lucide-react';
 import { useTuneForgeStore } from '../../store/useTuneForgeStore';
-import { PWAInstallButton } from '../pwa/PWAInstallButton';
+import { TuneForgeLogo } from '../ui/TuneForgeLogo';
 
 export const Header: React.FC = () => {
   const { currentRoute, navigate, isLoggedIn } = useTuneForgeStore();
@@ -20,24 +20,9 @@ export const Header: React.FC = () => {
         {/* Brand Logo */}
         <div 
           onClick={() => navigate('/')} 
-          className="flex items-center gap-2.5 cursor-pointer group select-none"
+          className="flex items-center gap-2 cursor-pointer group select-none"
         >
-          <div className="w-8 h-8 rounded-lg bg-slate-900 flex items-center justify-center text-amber-400 font-display font-bold text-lg shadow-sm group-hover:bg-slate-800 transition-colors">
-            TF
-          </div>
-          <div className="flex flex-col">
-            <div className="flex items-center gap-1.5">
-              <span className="font-display font-bold text-lg tracking-tight text-slate-900">
-                TuneForge
-              </span>
-              <span className="text-[10px] uppercase font-bold tracking-widest px-1.5 py-0.5 rounded bg-amber-100 text-amber-800">
-                AI Studio
-              </span>
-            </div>
-            <span className="text-[11px] text-slate-500 hidden sm:block">
-              YouTube Instrumental Content Engine
-            </span>
-          </div>
+          <TuneForgeLogo size="sm" showSubtext subtext="by Ridwan Johari" />
         </div>
 
         {/* Public Nav Items */}
@@ -62,8 +47,6 @@ export const Header: React.FC = () => {
 
         {/* Right CTA */}
         <div className="flex items-center gap-2 sm:gap-2.5">
-          <PWAInstallButton />
-
           {isLoggedIn ? (
             <>
               <button

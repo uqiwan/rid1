@@ -1,4 +1,5 @@
 import { YouTubeTitleVariant } from '../types';
+import { translateKeywordToEnglish } from '../utils/languageTranslator';
 
 export interface ThumbnailPromptDetail {
   styleName: string; // 'Cinematic Widescreen' | 'Split Composition' | 'Minimal Typography' | 'Emotional Lifestyle'
@@ -412,7 +413,8 @@ export function generateEngineeredThumbnailPrompts(input: ThumbnailGenerationInp
   };
   details: Record<'cinematic' | 'split' | 'minimal' | 'lifestyle', ThumbnailPromptDetail>;
 } {
-  const kw = input.optionalKeyword?.trim() || 'Deep Session';
+  const translatedKw = translateKeywordToEnglish(input.optionalKeyword);
+  const kw = translatedKw || 'Deep Session';
   const primaryMood = input.moods[0] || 'Peaceful';
   const secondaryMood = input.moods[1] || 'Cozy';
   const genre = input.genre || input.categoryName;
@@ -427,8 +429,8 @@ export function generateEngineeredThumbnailPrompts(input: ThumbnailGenerationInp
   };
 
   const cinematicRender = `A high-converting 16:9 YouTube thumbnail photograph for ${input.categoryName} (${genre}). [Layer 1 - Background]: ${cinematicLayers.background}. [Layer 2 - Main Subject]: ${cinematicLayers.mainSubject}. [Layer 3 - Foreground]: ${cinematicLayers.foreground}. [Layer 4 - Text Overlay]: ${cinematicLayers.textOverlay}. Visual rules: powerful complementary color contrast (${bp.contrastPairName}), single razor-sharp focal point with cinematic background/foreground blur, dramatic directional key lighting, authentic emotional expression, masterclass composition, highly clickable on mobile feeds --ar 16:9 --v 6.1`;
-  const cinematicReason = `Kontras komplementer ${bp.contrastPairName} yang mencolok langsung menghentikan scrolling di feed mobile, sementara teks "${bp.textVariants.cinematic}" memberikan janji manfaat instan dengan subjek emosional nyata yang membangun empati penonton.`;
-  const cinematicFull = `${cinematicRender} Pemicu Klik: ${cinematicReason}`;
+  const cinematicReason = `Striking complementary contrast of ${bp.contrastPairName} instantly halts the scroll in mobile feeds, while the "${bp.textVariants.cinematic}" text overlay provides an immediate benefit promise backed by an authentic emotional subject that builds viewer empathy.`;
+  const cinematicFull = `${cinematicRender} Click Trigger: ${cinematicReason}`;
 
   // 2. Split Composition
   const splitLayers = {
@@ -439,8 +441,8 @@ export function generateEngineeredThumbnailPrompts(input: ThumbnailGenerationInp
   };
 
   const splitRender = `A split-frame 16:9 YouTube thumbnail engineered for maximum CTR >20% on AI image generators. [Layer 1 - Background]: ${splitLayers.background}. [Layer 2 - Main Subject]: ${splitLayers.mainSubject}. [Layer 3 - Foreground]: ${splitLayers.foreground}. [Layer 4 - Text Overlay]: ${splitLayers.textOverlay}. Visual rules: high dynamic tension between cool shadows and burning warm highlights, razor-sharp focus on primary subjects, clean separation without clutter, margins strictly safe from YouTube UI duration badges --ar 16:9 --style raw`;
-  const splitReason = `Komposisi split-screen memicu curiosity gap visual melalui perbandingan langsung dua suasana (suasana luar vs kehangatan instrumen), terbukti meningkatkan rasio klik di atas 20%.`;
-  const splitFull = `${splitRender} Pemicu Klik: ${splitReason}`;
+  const splitReason = `The split-screen composition activates a visual curiosity gap through direct contrast between atmospheric environment and instrument warmth, engineered to push CTR above 20%.`;
+  const splitFull = `${splitRender} Click Trigger: ${splitReason}`;
 
   // 3. Minimal Typography
   const minimalLayers = {
@@ -451,8 +453,8 @@ export function generateEngineeredThumbnailPrompts(input: ThumbnailGenerationInp
   };
 
   const minimalRender = `Minimalist editorial 16:9 YouTube thumbnail engineered for AI image generation. [Layer 1 - Background]: ${minimalLayers.background}. [Layer 2 - Main Subject]: ${minimalLayers.mainSubject}. [Layer 3 - Foreground]: ${minimalLayers.foreground}. [Layer 4 - Text Overlay]: ${minimalLayers.textOverlay}. Visual rules: 65% clean negative space, single sharp heroic spotlight, high tonal contrast ratio (>15:1), stark visual hierarchy, instantly readable at 120px mobile thumbnail scale --ar 16:9`;
-  const minimalReason = `Ruang negatif yang lapang dan tipografi raksasa berkontras ekstrem membuat thumbnail ini langsung menonjol di tengah feed YouTube yang ramai, menarik penonton yang mencari fokus dan ketenangan.`;
-  const minimalFull = `${minimalRender} Pemicu Klik: ${minimalReason}`;
+  const minimalReason = `Expansive negative space and high-contrast typography allow this thumbnail to immediately stand out in cluttered YouTube feeds, captivating listeners seeking calm and deep focus.`;
+  const minimalFull = `${minimalRender} Click Trigger: ${minimalReason}`;
 
   // 4. Emotional Lifestyle
   const lifestyleLayers = {
@@ -463,8 +465,8 @@ export function generateEngineeredThumbnailPrompts(input: ThumbnailGenerationInp
   };
 
   const lifestyleRender = `An authentic emotional lifestyle 16:9 YouTube thumbnail prompt. [Layer 1 - Background]: ${lifestyleLayers.background}. [Layer 2 - Main Subject]: ${lifestyleLayers.mainSubject}. [Layer 3 - Foreground]: ${lifestyleLayers.foreground}. [Layer 4 - Text Overlay]: ${lifestyleLayers.textOverlay}. Visual rules: authentic human emotion and relatable relief, warm golden hour ambient glow contrasting against cool twilight shadows, shallow depth of field, genuine intimacy that invites clicks --ar 16:9 --q 2`;
-  const lifestyleReason = `Ekspresi wajah yang tenang dan damai memicu cermin emosi (mirror neuron) pada penonton yang sedang stres atau lelah, mendorong rasio klik organik mencapai potensi di atas 20%.`;
-  const lifestyleFull = `${lifestyleRender} Pemicu Klik: ${lifestyleReason}`;
+  const lifestyleReason = `An authentic, peaceful facial expression triggers mirror-neuron empathy in stressed or tired viewers, converting browse impressions into high-intent clicks above 20% CTR.`;
+  const lifestyleFull = `${lifestyleRender} Click Trigger: ${lifestyleReason}`;
 
   const details: Record<'cinematic' | 'split' | 'minimal' | 'lifestyle', ThumbnailPromptDetail> = {
     cinematic: {
@@ -478,7 +480,7 @@ export function generateEngineeredThumbnailPrompts(input: ThumbnailGenerationInp
       clickTriggerReason: cinematicReason,
       visualRules: {
         contrastPair: bp.contrastPairName,
-        focusDepth: 'Subjek Tajam (f/1.8) dengan Foreground & Background Blur',
+        focusDepth: 'Razor-Sharp Subject (f/1.8) with Foreground & Background Optical Blur',
         lighting: bp.lightingDescription,
         emotion: bp.emotionalExpression,
         palette: bp.complementaryColors
@@ -495,9 +497,9 @@ export function generateEngineeredThumbnailPrompts(input: ThumbnailGenerationInp
       clickTriggerReason: splitReason,
       visualRules: {
         contrastPair: `${bp.contrastPairName} (Dual-Tone Tension)`,
-        focusDepth: 'Dual-Focal Sharpness & Bokeh Foreground',
-        lighting: 'Pencahayaan Kontras Dua Nada (Cool vs Warm)',
-        emotion: 'Curiosity Gap & Flow State Mendalam',
+        focusDepth: 'Dual-Focal Sharpness & Foreground Bokeh Spheres',
+        lighting: 'Dual-Tone Contrast Lighting (Cool Shadows vs Warm Highlights)',
+        emotion: 'Curiosity Gap & Deep Flow State Immersion',
         palette: bp.complementaryColors
       }
     },
@@ -512,9 +514,9 @@ export function generateEngineeredThumbnailPrompts(input: ThumbnailGenerationInp
       clickTriggerReason: minimalReason,
       visualRules: {
         contrastPair: 'Dark Slate vs Blazing White-Cyan',
-        focusDepth: 'Hero Artifact Sharp, 65% Negative Space Blur',
-        lighting: 'Spotlight Diagonal Mengerucut',
-        emotion: 'Elegan, Bebas Distraksi & Pikiran Jernih',
+        focusDepth: 'Hero Centerpiece Sharp, 65% Negative Space Bokeh Blur',
+        lighting: 'Single-Directional Diagonal Cone Spotlight',
+        emotion: 'Refined Elegance, Zero Distraction & Mental Clarity',
         palette: 'Monochrome Slate & High-Luminance Accent'
       }
     },

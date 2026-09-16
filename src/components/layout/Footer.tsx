@@ -1,6 +1,7 @@
 import React from 'react';
 import { useTuneForgeStore } from '../../store/useTuneForgeStore';
 import { Sparkles, ShieldCheck, Zap } from 'lucide-react';
+import { TuneForgeLogo } from '../ui/TuneForgeLogo';
 
 export const Footer: React.FC = () => {
   const navigate = useTuneForgeStore((s) => s.navigate);
@@ -10,12 +11,13 @@ export const Footer: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
           <div className="md:col-span-2 space-y-3">
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded bg-slate-900 flex items-center justify-center text-amber-400 font-bold text-xs">
-                TF
+            <div className="flex items-center gap-2.5">
+              <TuneForgeLogo size="xs" variant="icon" />
+              <div className="flex items-center gap-2">
+                <span className="font-display font-bold text-slate-900 text-sm tracking-tight">TuneForge</span>
+                <span className="text-[11px] text-amber-600 font-medium">by Ridwan Johari</span>
+                <span className="text-[10px] bg-slate-200 text-slate-700 px-1.5 py-0.5 rounded font-mono">v1.0</span>
               </div>
-              <span className="font-display font-bold text-slate-900 text-sm tracking-tight">TuneForge</span>
-              <span className="text-[10px] bg-slate-200 text-slate-700 px-1.5 py-0.5 rounded font-mono">v1.0 MVP</span>
             </div>
             <p className="text-slate-500 leading-relaxed max-w-sm">
               Studio otomasi konten YouTube musik instrumental berbasis AI yang dirancang khusus untuk audience Tier-1 Amerika Serikat dengan fokus CTR &gt;20% dan retensi tinggi.

@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { Menu, Wand2, ArrowLeft, Shield, Sparkles } from 'lucide-react';
 import { useTuneForgeStore } from '../../store/useTuneForgeStore';
-import { PWAInstallButton } from '../pwa/PWAInstallButton';
+import { UserAvatar } from '../ui/UserAvatar';
 
 interface DashboardHeaderProps {
   onToggleMobileMenu: () => void;
@@ -60,7 +60,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onToggleMobile
           <span className="font-semibold text-slate-800 font-display text-sm tracking-tight">
             {getBreadcrumbTitle()}
           </span>
-          {currentUser.role === 'admin' && currentRoute.startsWith('/admin') && (
+          {currentUser?.role === 'admin' && currentRoute.startsWith('/admin') && (
             <span className="ml-2 inline-flex items-center gap-1 text-[10px] font-semibold bg-amber-100 text-amber-900 px-2 py-0.5 rounded-full">
               <Shield className="w-3 h-3 text-amber-700" /> Mode Super Admin
             </span>
@@ -69,9 +69,6 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onToggleMobile
       </div>
 
       <div className="flex items-center gap-2.5 sm:gap-3">
-        {/* PWA Install Button */}
-        <PWAInstallButton />
-
         <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 bg-slate-100 rounded-full text-[11px] text-slate-600 border border-slate-200">
           <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
           <Sparkles className="w-3 h-3 text-amber-600" />
@@ -88,6 +85,18 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onToggleMobile
             <span className="sm:hidden">Forge</span>
           </button>
         )}
+
+        {/* User Profile Quick Chip */}
+        <button
+          onClick={() => navigate('/profile')}
+          className="flex items-center gap-2 p-1 pl-2 hover:bg-slate-100 rounded-full border border-slate-200 transition-colors cursor-pointer"
+          title="Buka Profil Akun"
+        >
+          <span className="text-xs font-medium text-slate-700 hidden sm:inline max-w-[100px] truncate">
+            {currentUser?.name || 'Kreator'}
+          </span>
+          <UserAvatar user={currentUser} size="sm" />
+        </button>
       </div>
     </header>
   );

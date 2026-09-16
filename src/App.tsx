@@ -30,8 +30,15 @@ import { AdminPromptTemplates } from './pages/admin/AdminPromptTemplates';
 import { AdminUsers } from './pages/admin/AdminUsers';
 
 export default function App() {
-  const { currentRoute, routeParam } = useTuneForgeStore();
+  const { currentRoute, routeParam, isLoggedIn, currentUser, navigate } = useTuneForgeStore();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // If non-admin user attempts to access /admin routes, redirect immediately to /dashboard
+  React.useEffect(() => {
+    if (isLoggedIn && currentUser?.role !== 'admin' && currentRoute.startsWith('/admin')) {
+      navigate('/dashboard');
+    }
+  }, [currentRoute, currentUser?.role, isLoggedIn, navigate]);
 
   // Check if current route is part of Dashboard / Admin
   const isDashboardRoute = 
@@ -42,6 +49,21 @@ export default function App() {
     currentRoute === '/history' ||
     currentRoute === '/profile' ||
     currentRoute.startsWith('/admin');
+
+  // Mandatory Authentication: If user is not logged in, enforce login for main features or on initial load
+  if (!isLoggedIn && (isDashboardRoute || currentRoute === '/login')) {
+    return (
+      <div className="min-h-screen bg-white text-slate-900 font-sans flex flex-col antialiased selection:bg-amber-100 selection:text-amber-900">
+        <GlobalToast />
+        <OfflineIndicator />
+        <Header />
+        <main className="flex-1 flex items-center justify-center bg-slate-50/50">
+          <LoginPage />
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   // Render Public Page view (fallback if accessed)
   const renderPublicContent = () => {
@@ -66,6 +88,11 @@ export default function App() {
 
   // Render Dashboard / Admin Page view
   const renderDashboardContent = () => {
+    // If not super admin, block access to any admin pages
+    if (currentRoute.startsWith('/admin') && currentUser?.role !== 'admin') {
+      return <DashboardOverview />;
+    }
+
     switch (currentRoute) {
       case '/':
       case '/dashboard':

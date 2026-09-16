@@ -42,7 +42,7 @@ export const DashboardOverview: React.FC = () => {
             <span>Studio Siap Digunakan</span>
           </div>
           <h1 className="font-display font-bold text-2xl sm:text-3xl text-white tracking-tight">
-            Selamat Datang, {currentUser.name}!
+            Selamat Datang, {currentUser?.name || 'Kreator'}!
           </h1>
           <p className="text-slate-300 text-xs sm:text-sm leading-relaxed">
             Hasilkan paket metadata SEO, teks thumbnail ber-CTR tinggi, hook video, dan prompt AI stabil untuk channel YouTube instrumental Anda.

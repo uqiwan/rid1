@@ -17,6 +17,8 @@
  *    - High-retention visual dynamism in a calm static setting
  */
 
+import { translateKeywordToEnglish } from '../utils/languageTranslator';
+
 export interface GoogleFlowPromptResult {
   imagePrompt: string;
   videoPrompt: string;
@@ -68,7 +70,8 @@ interface SceneArchetype {
 
 export function generateGoogleFlowPrompts(input: GoogleFlowEngineInput): GoogleFlowPromptResult {
   const { categoryName, genre, moods, optionalKeyword, variationIndex = 0 } = input;
-  const kw = (optionalKeyword && optionalKeyword.trim().length > 0) ? optionalKeyword.trim() : 'ambient sanctuary';
+  const translatedKw = translateKeywordToEnglish(optionalKeyword);
+  const kw = (translatedKw && translatedKw.trim().length > 0) ? translatedKw.trim() : 'ambient sanctuary';
   const primaryMood = moods[0] || 'Deep Focus';
   const secondaryMood = moods[1] || 'Peaceful';
 
@@ -95,7 +98,7 @@ export function generateGoogleFlowPrompts(input: GoogleFlowEngineInput): GoogleF
   const layerLightingAndGrading = `Lighting & Color Grading: ${lit.direction}. Rich contrast, deep cinematic shadows, and subtle specular highlights creating ${lit.contrastMood}.`;
 
   // Final Integrated Image Prompt (Closing with exact mandatory phrase)
-  const imagePrompt = `[PROMPT GAMBAR - Google Flow Base Image]\n` +
+  const imagePrompt = `[IMAGE PROMPT - Google Flow Base Image]\n` +
     `${layerBackground} ` +
     `${layerMainSubject} ` +
     `${layerForeground} ` +
@@ -109,7 +112,7 @@ export function generateGoogleFlowPrompts(input: GoogleFlowEngineInput): GoogleF
 
   const loopSpec = `Continuous seamless 10-second loop cycle with identical start and end frames, zero jump-cuts, zero morphing artifacts.`;
 
-  const videoPrompt = `[PROMPT VIDEO - Google Flow Image-to-Video Loop]\n` +
+  const videoPrompt = `[VIDEO PROMPT - Google Flow Image-to-Video Loop]\n` +
     `Animate the base image with subtle, hypnotic micro-movements engineered for an infinite instrumental music stream. ` +
     `${cameraRule} ` +
     `Isolated cyclical micro-motions: ` +

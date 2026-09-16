@@ -39,112 +39,14 @@ const INITIAL_TEMPLATES: PromptTemplate[] = [
   }
 ];
 
-const INITIAL_USERS: User[] = [
-  {
-    id: 'usr-demo',
-    googleSub: 'google-sub-109283746592817263',
-    email: 'uqiwan@gmail.com',
-    name: 'Uqiwan Studio',
-    avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-    role: 'admin',
-    createdAt: '2025-01-10T08:00:00Z',
-    lastLoginAt: new Date().toISOString()
-  },
-  {
-    id: 'usr-002',
-    googleSub: 'google-sub-948293812491028374',
-    email: 'john.lofi@producer.io',
-    name: 'John Lofi Beats',
-    avatarUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
-    role: 'user',
-    createdAt: '2025-02-01T10:00:00Z',
-    lastLoginAt: '2025-11-14T14:20:00Z'
-  },
-  {
-    id: 'usr-003',
-    googleSub: 'google-sub-738192039182736451',
-    email: 'sarah.piano@cinematic.com',
-    name: 'Sarah Solo Keys',
-    avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80',
-    role: 'user',
-    createdAt: '2025-02-15T09:30:00Z',
-    lastLoginAt: '2025-11-13T18:40:00Z'
-  },
-  {
-    id: 'usr-004',
-    googleSub: 'google-sub-119283948572615243',
-    email: 'alex.ambient@sleepsound.org',
-    name: 'Alex Ambient Studio',
-    avatarUrl: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=150&auto=format&fit=crop&q=80',
-    role: 'user',
-    createdAt: '2025-03-01T11:00:00Z',
-    lastLoginAt: '2025-11-12T08:15:00Z'
-  }
-];
+const INITIAL_USERS: User[] = [];
 
 class DbRepository {
   private categories: Category[] = [...CATEGORIES_DATA];
-  private packages: ContentPackage[] = [
-    SAMPLE_LOFI_PACKAGE,
-    {
-      id: 'pkg-synth-002',
-      userId: 'usr-demo',
-      categoryId: 'cat-02',
-      categoryName: 'Synthwave & Retrowave',
-      subGenre: 'Outrun 80s Cyberpunk',
-      moods: ['Nostalgic', 'Energetic', 'Night Drive'],
-      optionalKeyword: 'neon highway sunset',
-      createdAt: new Date(Date.now() - 3600000 * 24).toISOString(),
-      generationMs: 3120,
-      model: 'gemini-3.8-flash',
-      metadata: {
-        titleA: 'Neon Highway 1984 🚗 Retrowave & Synthwave Mix [1 Hour Retro Night Drive]',
-        titleB: 'Cyberpunk 80s Synthwave Chill — Nostalgic Outrun Beats for Coding / Driving',
-        titleC: 'Retro Electro Dreams ⚡ Sunset Drive Synthwave (1 Hour Seamless Audio Loop)',
-        description: 'Take an immersive cruise through the neon-lit grid with synthwave and outrun retro electronic beats.\n\nMastered to YouTube -14 LUFS standard for maximum acoustic fidelity.\n\n#synthwave #retrowave #nightdrive #cyberpunk',
-        tags: ['synthwave', 'retrowave', '80s beats', 'night drive', 'cyberpunk music', 'chillwave', 'outrun', 'retro electro']
-      },
-      thumbnailText: {
-        variant1: 'NIGHT DRIVE 80s 🚗',
-        variant2: 'RETRO SYNTH ⚡',
-        variant3: 'OUTRUN 1984 🌆'
-      },
-      introHook: 'Ignite the engine, dim the room, and let the retro-futuristic synths take over your flow state.',
-      thumbnailPrompts: {
-        cinematic: 'Cinematic 16:9 shot of a sleek 1980s sports car dashboard driving towards a massive magenta synthwave grid sunset. Neon purple and cyan lighting reflections on chrome trim, ultra detailed.',
-        split: 'Split screen 16:9 thumbnail. Left: glowing vintage synthesizer keyboard. Right: neon grid freeway stretching to digital horizon.',
-        minimal: 'High contrast minimalist silhouette of an 80s supercar against an oversized retro chrome grid sun.',
-        lifestyle: 'Night time creator room with purple and cyan neon strip lighting, VHS tape collection, and retro arcade cabinet.'
-      },
-      imagePrompts: [
-        'Standalone single scene: Retrowave sports car parked on a scenic coastal overlook facing a neon magenta horizon, static locked-off composition for video looping.',
-        'Standalone single scene: Cyberpunk highway stretching into a vibrant neon sunset grid with gentle pixel dust reflections, locked camera framing.',
-        'Standalone single scene: Retro futuristic bedroom overlooking a neon cityscape, warm twilight glow, balanced negative space.'
-      ],
-      videoPrompt: 'Image-to-video seamless loop: Locked-off camera on tripod. Subtle gentle pulsing of the neon horizon and faint ambient dust drifting slowly. Zero camera panning, flawless 10s loop cycle.',
-      technicalNotes: '• Target: -14 LUFS\n• Bitrate: 320kbps AAC audio\n• Visual: 10s loop extended to 60 minutes timeline.'
-    }
-  ];
+  private packages: ContentPackage[] = [];
   private templates: PromptTemplate[] = [...INITIAL_TEMPLATES];
-  private users: User[] = [...INITIAL_USERS];
-  private auditLogs: AuditLog[] = [
-    {
-      id: 'log-01',
-      adminEmail: 'uqiwan@gmail.com',
-      action: 'INIT_SYSTEM',
-      entity: 'System',
-      details: 'Sistem TuneForge Fase 3 berhasil diinisialisasi dengan portal Super Admin & Knowledge Base sinkron.',
-      timestamp: new Date(Date.now() - 3600000).toISOString()
-    },
-    {
-      id: 'log-02',
-      adminEmail: 'uqiwan@gmail.com',
-      action: 'UPDATE',
-      entity: 'Category',
-      details: 'Memverifikasi konsistensi search intent untuk 18 Kategori Musik Instrumental.',
-      timestamp: new Date(Date.now() - 1800000).toISOString()
-    }
-  ];
+  private users: User[] = [];
+  private auditLogs: AuditLog[] = [];
 
   // Packages
   public getPackages(search?: string, categoryId?: string): ContentPackage[] {
@@ -296,6 +198,44 @@ class DbRepository {
 
   public getUserById(id: string): User | undefined {
     return this.users.find((u) => u.id === id);
+  }
+
+  public upsertUser(userData: {
+    email: string;
+    name: string;
+    avatarUrl?: string;
+    role?: 'user' | 'admin';
+    googleSub?: string;
+  }): User {
+    const existing = this.users.find((u) => u.email.toLowerCase() === userData.email.toLowerCase());
+    if (existing) {
+      existing.lastLoginAt = new Date().toISOString();
+      if (userData.name) existing.name = userData.name;
+      if (userData.avatarUrl) existing.avatarUrl = userData.avatarUrl;
+      if (userData.role) existing.role = userData.role;
+      return existing;
+    }
+
+    const newUser: User = {
+      id: `usr-${Date.now()}`,
+      googleSub: userData.googleSub || `google-sub-${Math.floor(100000000000000000 + Math.random() * 900000000000000000)}`,
+      email: userData.email,
+      name: userData.name,
+      avatarUrl: userData.avatarUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(userData.name)}&backgroundColor=f59e0b`,
+      role: userData.role || (this.users.length === 0 ? 'admin' : 'user'),
+      createdAt: new Date().toISOString(),
+      lastLoginAt: new Date().toISOString()
+    };
+
+    this.users.push(newUser);
+    this.addAuditLog({
+      adminEmail: newUser.email,
+      action: 'USER_REGISTER',
+      entity: 'User',
+      details: `Pengguna terdaftar via Google OAuth: ${newUser.name} (${newUser.email})`
+    });
+
+    return newUser;
   }
 
   public updateUserRole(id: string, role: 'user' | 'admin', adminEmail = 'uqiwan@gmail.com'): User | null {

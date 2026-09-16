@@ -37,16 +37,7 @@ export const AdminDashboard: React.FC = () => {
     showToast('Mengunduh backup JSON paket konten...');
   };
 
-  const displayLogs = auditLogs.length > 0 ? auditLogs : [
-    {
-      id: 'log-01',
-      adminEmail: 'uqiwan@gmail.com',
-      action: 'INIT_SYSTEM',
-      entity: 'System',
-      details: 'Sistem TuneForge Fase 3 berhasil diinisialisasi dengan 18 kategori terverifikasi.',
-      timestamp: new Date().toISOString()
-    }
-  ];
+  const displayLogs = auditLogs;
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-6xl mx-auto space-y-8">
@@ -134,7 +125,7 @@ export const AdminDashboard: React.FC = () => {
             <Users className="w-4 h-4 text-emerald-600" />
           </div>
           <p className="font-display font-extrabold text-2xl text-slate-900">
-            {systemStats?.totalUsers || 4}
+            {systemStats?.totalUsers ?? 0}
           </p>
           <span className="text-[11px] text-slate-400">Google OAuth 1-Klik</span>
         </div>

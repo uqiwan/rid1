@@ -1,4 +1,9 @@
 import { YouTubeTitleVariant } from '../types';
+import { 
+  translateDurationToEnglish, 
+  translateUseCaseToEnglish, 
+  translateKeywordToEnglish 
+} from '../utils/languageTranslator';
 
 export type TitleVariant = YouTubeTitleVariant;
 
@@ -128,16 +133,16 @@ export function scoreYouTubeTitle(
 
   const totalScore = Math.min(100, Math.round(seoKeyword + ctrPotential + contentHonesty + formulaCompliance));
 
-  // Determine concise 1-sentence reason
-  let reason = 'Formula judul seimbang dengan kombinasi keyword niche dan keyword bervolume tinggi.';
+  // Determine concise 1-sentence reason in US English
+  let reason = 'Balanced title formula combining specific niche keywords and high-volume search intent.';
   if (totalScore >= 96) {
-    reason = 'Kombinasi keyword spesifik, search volume tinggi, dan panjang 45–70 karakter sangat ideal untuk CTR mobile & algoritma YouTube.';
+    reason = 'Prime formula: specific niche keyword, high search volume, and 45–70 character sweet spot ideal for mobile CTR and YouTube algorithm recommendation.';
   } else if (totalScore >= 90) {
-    reason = 'Kuat pada search intent aktivitas penonton dengan struktur formula yang rapi dan jujur.';
+    reason = 'Strong search intent alignment with clean structure, high clarity, and authentic content presentation.';
   } else if (totalScore >= 80) {
-    reason = 'Keyword niche dan genre jelas, teroptimasi untuk target penonton musik instrumental.';
+    reason = 'Clear niche keywords and genre identification, highly optimized for instrumental music discovery.';
   } else {
-    reason = 'Memenuhi struktur dasar judul instrumental, ramah algoritma dengan panjang terbaca jelas.';
+    reason = 'Satisfies foundational instrumental title structure with high readability and algorithmic clarity.';
   }
 
   return {
@@ -154,12 +159,14 @@ export function scoreYouTubeTitle(
  * Automatically refines until the top variant reaches >95% score (Rekomendasi Utama).
  */
 export function generateRefinedTitleVariants(input: TitleGenerationInput): TitleVariant[] {
-  const specific = input.optionalKeyword?.trim() || input.moods[0] || 'Deep Focus';
+  const translatedKw = translateKeywordToEnglish(input.optionalKeyword);
+  const specific = translatedKw || input.moods[0] || 'Deep Focus';
   const moodClean = input.moods[0] || 'Peaceful';
   const secondaryMood = input.moods[1] || 'Calm';
   const genreClean = input.genre || input.categoryName;
-  const durationClean = input.duration?.trim() ? `(${input.duration.trim()})` : '(1 Hour)';
-  const useCaseClean = input.useCase?.trim() || 'Study & Work';
+  const translatedDuration = translateDurationToEnglish(input.duration);
+  const durationClean = `(${translatedDuration})`;
+  const useCaseClean = translateUseCaseToEnglish(input.useCase);
 
   // Extract instrument or sub-style hints
   const instrumentHint = genreClean.toLowerCase().includes('piano')
@@ -224,7 +231,7 @@ export function generateRefinedTitleVariants(input: TitleGenerationInput): Title
         contentHonesty: 20,
         formulaCompliance: 15
       },
-      reason: 'Formula sempurna: kombinasi keyword niche, keyword volume tinggi YouTube, panjang 50–65 karakter, dan 100% jujur sesuai isi.'
+      reason: 'Perfect formula: high-precision niche keyword, high-volume YouTube search intent, 50–65 character sweet spot, and 100% content honesty.'
     };
   }
 

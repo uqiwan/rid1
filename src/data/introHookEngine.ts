@@ -1,4 +1,5 @@
 import { ContentPackage } from '../types';
+import { translateDurationToEnglish, translateUseCaseToEnglish } from '../utils/languageTranslator';
 
 export interface IntroHookTiers {
   hook: string;
@@ -17,7 +18,7 @@ export function getIntroHookTiers(pkg: ContentPackage): IntroHookTiers {
   // If explicitly present in package
   if (pkg.introHookDetails && pkg.introHookDetails.hook) {
     const { hook, subtitle, cta } = pkg.introHookDetails;
-    const fullFormattedText = `1) Hook:\n${hook}\n\n2) Sub-judul:\n${subtitle}\n\n3) Call to Action:\n${cta}`;
+    const fullFormattedText = `1) Hook:\n${hook}\n\n2) Subtitle:\n${subtitle}\n\n3) Call to Action:\n${cta}`;
     return { hook, subtitle, cta, fullFormattedText };
   }
 
@@ -40,7 +41,7 @@ export function getIntroHookTiers(pkg: ContentPackage): IntroHookTiers {
     }
 
     if (hook && subtitle && cta) {
-      const fullFormattedText = `1) Hook:\n${hook}\n\n2) Sub-judul:\n${subtitle}\n\n3) Call to Action:\n${cta}`;
+      const fullFormattedText = `1) Hook:\n${hook}\n\n2) Subtitle:\n${subtitle}\n\n3) Call to Action:\n${cta}`;
       return { hook, subtitle, cta, fullFormattedText };
     }
   }
@@ -48,8 +49,8 @@ export function getIntroHookTiers(pkg: ContentPackage): IntroHookTiers {
   // Build tailor-made 3 tiers based on category, genre, moods, useCase, duration
   const categoryLower = (pkg.categoryName || '').toLowerCase();
   const genreLower = (pkg.subGenre || '').toLowerCase();
-  const useCase = pkg.useCase || 'Study & Deep Work';
-  const duration = pkg.duration || '1 Hour';
+  const useCase = translateUseCaseToEnglish(pkg.useCase);
+  const duration = translateDurationToEnglish(pkg.duration);
   const moodStr = pkg.moods && pkg.moods.length > 0 ? pkg.moods.join(', ') : 'Peaceful, Focused';
 
   let hook = 'Struggling to silence the noise and focus on what truly matters right now?';
@@ -79,7 +80,7 @@ export function getIntroHookTiers(pkg: ContentPackage): IntroHookTiers {
     cta = 'Put on your headphones and let this complete musical session help you achieve peak calm and focus.';
   }
 
-  const fullFormattedText = `1) Hook:\n${hook}\n\n2) Sub-judul:\n${subtitle}\n\n3) Call to Action:\n${cta}`;
+  const fullFormattedText = `1) Hook:\n${hook}\n\n2) Subtitle:\n${subtitle}\n\n3) Call to Action:\n${cta}`;
 
   return { hook, subtitle, cta, fullFormattedText };
 }

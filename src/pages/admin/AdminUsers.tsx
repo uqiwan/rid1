@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Users, Search, Shield, ArrowLeft, CheckCircle2, UserCheck, ShieldAlert, RefreshCw } from 'lucide-react';
 import { useTuneForgeStore } from '../../store/useTuneForgeStore';
+import { UserAvatar } from '../../components/ui/UserAvatar';
 import { User } from '../../types';
 
 export const AdminUsers: React.FC = () => {
@@ -17,7 +18,7 @@ export const AdminUsers: React.FC = () => {
     const newRole: 'user' | 'admin' = u.role === 'admin' ? 'user' : 'admin';
     const success = await updateUserRoleInBackend(u.id, newRole);
     if (success) {
-      if (u.id === currentUser.id) {
+      if (currentUser && u.id === currentUser.id) {
         setUserRole(newRole);
       }
       showToast(`Peran ${u.name} berhasil diubah menjadi ${newRole.toUpperCase()}`);
@@ -26,7 +27,7 @@ export const AdminUsers: React.FC = () => {
     }
   };
 
-  const displayUsers = usersList.length > 0 ? usersList : [currentUser];
+  const displayUsers = usersList;
 
   const filteredUsers = displayUsers.filter((u) =>
     u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -96,54 +97,62 @@ export const AdminUsers: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {filteredUsers.map((u) => (
-                <tr key={u.id} className="hover:bg-slate-50/70 transition-colors">
-                  <td className="px-5 py-4 whitespace-nowrap">
-                    <div className="flex items-center gap-3">
-                      <img
-                        src={u.avatarUrl}
-                        alt={u.name}
-                        className="w-8 h-8 rounded-full object-cover border border-slate-200"
-                      />
-                      <div>
-                        <span className="font-semibold text-slate-900 block">{u.name}</span>
-                        <span className="text-[11px] text-slate-500">{u.email}</span>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-5 py-4 whitespace-nowrap font-mono text-slate-500 text-[11px]">
-                    {u.googleSub}
-                  </td>
-                  <td className="px-5 py-4 whitespace-nowrap">
-                    <span className={`inline-flex items-center gap-1 text-[11px] px-2.5 py-0.5 rounded-full font-medium ${
-                      u.role === 'admin'
-                        ? 'bg-amber-100 text-amber-900 border border-amber-300'
-                        : 'bg-slate-100 text-slate-700'
-                    }`}>
-                      {u.role === 'admin' ? <Shield className="w-3 h-3 text-amber-700" /> : <UserCheck className="w-3 h-3" />}
-                      {u.role === 'admin' ? 'Super Admin' : 'Kreator'}
-                    </span>
-                  </td>
-                  <td className="px-5 py-4 whitespace-nowrap text-slate-500 font-mono text-[11px]">
-                    {new Date(u.createdAt).toLocaleDateString('id-ID')}
-                  </td>
-                  <td className="px-5 py-4 whitespace-nowrap text-slate-500 font-mono text-[11px]">
-                    {new Date(u.lastLoginAt).toLocaleDateString('id-ID')}
-                  </td>
-                  <td className="px-5 py-4 whitespace-nowrap text-right">
-                    <button
-                      onClick={() => toggleUserRole(u)}
-                      className={`px-3 py-1 rounded-md text-xs font-medium cursor-pointer transition-colors ${
-                        u.role === 'admin'
-                          ? 'bg-slate-100 hover:bg-slate-200 text-slate-700'
-                          : 'bg-amber-500 hover:bg-amber-600 text-slate-950 font-semibold'
-                      }`}
-                    >
-                      {u.role === 'admin' ? 'Ubah ke Kreator' : 'Jadikan Admin'}
-                    </button>
+              {filteredUsers.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-5 py-12 text-center text-slate-400">
+                    <Users className="w-8 h-8 mx-auto mb-2 text-slate-300" />
+                    <p className="font-medium text-slate-600">Belum ada data pengguna yang tersimpan.</p>
+                    <p className="text-[11px] text-slate-400 mt-0.5">
+                      Pengguna yang masuk melalui Google Authentication akan otomatis tercatat di sini secara nyata.
+                    </p>
                   </td>
                 </tr>
-              ))}
+              ) : (
+                filteredUsers.map((u) => (
+                  <tr key={u.id} className="hover:bg-slate-50/70 transition-colors">
+                    <td className="px-5 py-4 whitespace-nowrap">
+                      <div className="flex items-center gap-3">
+                        <UserAvatar user={u} size="sm" />
+                        <div>
+                          <span className="font-semibold text-slate-900 block">{u.name}</span>
+                          <span className="text-[11px] text-slate-500">{u.email}</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-5 py-4 whitespace-nowrap font-mono text-slate-500 text-[11px]">
+                      {u.googleSub}
+                    </td>
+                    <td className="px-5 py-4 whitespace-nowrap">
+                      <span className={`inline-flex items-center gap-1 text-[11px] px-2.5 py-0.5 rounded-full font-medium ${
+                        u.role === 'admin'
+                          ? 'bg-amber-100 text-amber-900 border border-amber-300'
+                          : 'bg-slate-100 text-slate-700'
+                      }`}>
+                        {u.role === 'admin' ? <Shield className="w-3 h-3 text-amber-700" /> : <UserCheck className="w-3 h-3" />}
+                        {u.role === 'admin' ? 'Super Admin' : 'Kreator'}
+                      </span>
+                    </td>
+                    <td className="px-5 py-4 whitespace-nowrap text-slate-500 font-mono text-[11px]">
+                      {new Date(u.createdAt).toLocaleDateString('id-ID')}
+                    </td>
+                    <td className="px-5 py-4 whitespace-nowrap text-slate-500 font-mono text-[11px]">
+                      {new Date(u.lastLoginAt).toLocaleDateString('id-ID')}
+                    </td>
+                    <td className="px-5 py-4 whitespace-nowrap text-right">
+                      <button
+                        onClick={() => toggleUserRole(u)}
+                        className={`px-3 py-1 rounded-md text-xs font-medium cursor-pointer transition-colors ${
+                          u.role === 'admin'
+                            ? 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                            : 'bg-amber-500 hover:bg-amber-600 text-slate-950 font-semibold'
+                        }`}
+                      >
+                        {u.role === 'admin' ? 'Ubah ke Kreator' : 'Jadikan Admin'}
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
