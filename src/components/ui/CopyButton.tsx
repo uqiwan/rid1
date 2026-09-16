@@ -6,7 +6,7 @@ interface CopyButtonProps {
   textToCopy: string;
   label?: string;
   className?: string;
-  variant?: 'default' | 'amber' | 'minimal' | 'light';
+  variant?: 'default' | 'amber' | 'minimal' | 'light' | 'white';
 }
 
 export const CopyButton: React.FC<CopyButtonProps> = ({
@@ -36,13 +36,39 @@ export const CopyButton: React.FC<CopyButtonProps> = ({
         type="button"
         onClick={handleCopy}
         title="Salin ke clipboard"
-        className={`inline-flex items-center justify-center p-1.5 rounded-lg transition-all cursor-pointer shadow-xs shrink-0 ${
+        className={`inline-flex items-center justify-center p-1.5 rounded-lg transition-all cursor-pointer border shrink-0 ${
           copied
-            ? 'bg-emerald-600 text-white ring-2 ring-emerald-400'
-            : 'bg-slate-900 hover:bg-black text-white hover:scale-105 active:scale-95'
+            ? 'bg-emerald-50 text-emerald-700 border-emerald-300 ring-2 ring-emerald-200'
+            : 'bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900 border-slate-200 active:scale-95'
         } ${className}`}
       >
-        {copied ? <Check className="w-3.5 h-3.5 text-white" /> : <Copy className="w-3.5 h-3.5 text-white" />}
+        {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5 text-slate-500" />}
+      </button>
+    );
+  }
+
+  if (variant === 'white') {
+    return (
+      <button
+        type="button"
+        onClick={handleCopy}
+        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer transition-colors border shadow-2xs ${
+          copied
+            ? 'bg-emerald-50 text-emerald-700 border-emerald-300 ring-1 ring-emerald-200'
+            : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-200 active:scale-[0.98]'
+        } ${className}`}
+      >
+        {copied ? (
+          <>
+            <Check className="w-3.5 h-3.5 text-emerald-600" />
+            <span className="font-semibold text-emerald-700">Tersalin!</span>
+          </>
+        ) : (
+          <>
+            <Copy className="w-3.5 h-3.5 text-slate-600" />
+            <span>{label}</span>
+          </>
+        )}
       </button>
     );
   }
@@ -103,20 +129,20 @@ export const CopyButton: React.FC<CopyButtonProps> = ({
     <button
       type="button"
       onClick={handleCopy}
-      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-all shadow-xs ${
+      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-all border shadow-2xs ${
         copied
-          ? 'bg-emerald-600 text-white ring-2 ring-emerald-400'
-          : 'bg-slate-900 hover:bg-black text-white hover:shadow-md hover:scale-[1.02] active:scale-98'
+          ? 'bg-emerald-50 text-emerald-700 border-emerald-300 ring-2 ring-emerald-200 shadow-xs'
+          : 'bg-slate-100 hover:bg-slate-200/90 text-slate-700 hover:text-slate-900 border-slate-200/90 active:scale-[0.98]'
       } ${className}`}
     >
       {copied ? (
         <>
-          <Check className="w-3.5 h-3.5 text-white" />
-          <span>Tersalin!</span>
+          <Check className="w-3.5 h-3.5 text-emerald-600" />
+          <span className="font-semibold text-emerald-700">Tersalin!</span>
         </>
       ) : (
         <>
-          <Copy className="w-3.5 h-3.5 text-white" />
+          <Copy className="w-3.5 h-3.5 text-slate-500" />
           <span>{label}</span>
         </>
       )}

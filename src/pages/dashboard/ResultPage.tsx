@@ -219,7 +219,7 @@ ${singleVideoPrompt}
     .join('\n\n');
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 max-w-4xl mx-auto space-y-6">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-4xl mx-auto space-y-6 pb-28">
       {/* Bar Atas Sticky: Salin Semua & Navigasi */}
       <div className="sticky top-16 z-20 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-3 bg-white/95 backdrop-blur-sm border-b border-slate-200 flex flex-wrap items-center justify-between gap-3 shadow-xs">
         <div className="flex items-center gap-2">
@@ -239,7 +239,7 @@ ${singleVideoPrompt}
         <div className="flex items-center gap-2">
           <button
             onClick={() => navigate('/generate')}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-100 border border-slate-200 cursor-pointer transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-700 bg-white hover:bg-slate-100 border border-slate-200 cursor-pointer transition-colors shadow-2xs"
           >
             <Wand2 className="w-3.5 h-3.5 text-amber-500" />
             <span>Buat Paket Baru</span>
@@ -248,7 +248,7 @@ ${singleVideoPrompt}
           <CopyButton
             textToCopy={getMarkdownAll()}
             label="Salin Semua Output (Format Markdown)"
-            variant="amber"
+            variant="white"
           />
         </div>
       </div>
@@ -355,7 +355,7 @@ ${singleVideoPrompt}
             <CopyButton textToCopy={pkg.metadata.tags.join(', ')} label="Salin Tag" />
           </div>
           <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
-            <p className="text-xs font-mono text-slate-900 break-all select-all leading-relaxed font-semibold">
+            <p className="text-xs font-mono text-slate-900 break-all select-all leading-relaxed font-normal">
               {pkg.metadata.tags.join(', ')}
             </p>
           </div>
@@ -526,7 +526,7 @@ ${singleVideoPrompt}
             />
           </div>
           <div className="p-3.5 bg-slate-50 rounded-lg border border-slate-200">
-            <pre className="text-xs font-mono text-slate-900 whitespace-pre-wrap leading-relaxed select-all font-semibold">
+            <pre className="text-xs font-mono text-slate-900 whitespace-pre-wrap leading-relaxed select-all">
               {currentThumbPrompt}
             </pre>
           </div>
@@ -561,7 +561,7 @@ ${singleVideoPrompt}
           <span className="text-[11px] font-bold text-amber-700 block font-mono">
             [PROMPT GAMBAR]
           </span>
-          <pre className="text-xs font-mono text-slate-900 whitespace-pre-wrap leading-relaxed select-all font-semibold">
+          <pre className="text-xs font-mono text-slate-900 whitespace-pre-wrap leading-relaxed select-all">
             {singleImagePrompt}
           </pre>
         </div>
@@ -595,7 +595,7 @@ ${singleVideoPrompt}
           <span className="text-[11px] font-bold text-amber-700 block font-mono">
             [PROMPT VIDEO]
           </span>
-          <pre className="text-xs font-mono text-slate-900 whitespace-pre-wrap leading-relaxed select-all font-semibold">
+          <pre className="text-xs font-mono text-slate-900 whitespace-pre-wrap leading-relaxed select-all">
             {singleVideoPrompt}
           </pre>
         </div>
@@ -611,21 +611,14 @@ ${singleVideoPrompt}
 
       {/* BLOK 7: DIHAPUS / DISEMBUNYIKAN SEPENUHNYA SESUAI INSTRUKSI */}
 
-      {/* Tombol Bawah */}
-      <div className="pt-4 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3">
+      {/* Navigasi Bawah */}
+      <div className="pt-4 border-t border-slate-200 flex items-center justify-between">
         <button
           onClick={() => navigate('/history')}
-          className="text-xs font-semibold text-slate-600 hover:text-slate-900 cursor-pointer"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 cursor-pointer transition-colors"
         >
-          ← Kembali ke Riwayat
-        </button>
-
-        <button
-          onClick={() => navigate('/generate')}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold cursor-pointer transition-colors"
-        >
-          <Wand2 className="w-3.5 h-3.5 text-amber-400" />
-          <span>Buat Paket Baru</span>
+          <ArrowLeft className="w-3.5 h-3.5" />
+          <span>Kembali ke Riwayat</span>
         </button>
       </div>
     </div>

@@ -186,7 +186,7 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ onCloseMobil
           className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 transition-colors cursor-pointer"
         >
           <Wand2 className="w-4 h-4 text-amber-400" />
-          <span>+ Forge Konten Baru</span>
+          <span>Forge Konten Baru</span>
         </button>
 
         <button

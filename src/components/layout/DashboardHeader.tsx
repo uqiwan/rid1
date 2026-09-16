@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react';
-import { Menu, Wand2, ArrowLeft, Shield, Sparkles } from 'lucide-react';
+import { Menu, Wand2, Shield, Sparkles } from 'lucide-react';
 import { useTuneForgeStore } from '../../store/useTuneForgeStore';
-import { UserAvatar } from '../ui/UserAvatar';
 
 interface DashboardHeaderProps {
   onToggleMobileMenu: () => void;
@@ -85,18 +84,6 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onToggleMobile
             <span className="sm:hidden">Forge</span>
           </button>
         )}
-
-        {/* User Profile Quick Chip */}
-        <button
-          onClick={() => navigate('/profile')}
-          className="flex items-center gap-2 p-1 pl-2 hover:bg-slate-100 rounded-full border border-slate-200 transition-colors cursor-pointer"
-          title="Buka Profil Akun"
-        >
-          <span className="text-xs font-medium text-slate-700 hidden sm:inline max-w-[100px] truncate">
-            {currentUser?.name || 'Kreator'}
-          </span>
-          <UserAvatar user={currentUser} size="sm" />
-        </button>
       </div>
     </header>
   );

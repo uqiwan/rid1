@@ -49,28 +49,28 @@ export const GeneratePage: React.FC = () => {
   );
 
   const sampleKeywords = [
-    'Hujan di Tokyo',
-    'Coding Malam Hari',
-    'Kedai Kopi Santai',
-    'Meditasi Tenang',
-    'Musim Gugur & Senja'
+    'Rain in Tokyo',
+    'Late Night Coding',
+    'Cozy Coffee Shop',
+    'Deep Meditation',
+    'Autumn & Sunset'
   ];
 
   const durationOptions = [
-    { value: '1 Jam', label: '1 Jam' },
-    { value: '2 Jam', label: '2 Jam' },
-    { value: '3 Jam', label: '3 Jam' },
-    { value: '8 Jam', label: '8 Jam' },
-    { value: '10 Jam', label: '10 Jam' },
-    { value: '', label: 'Tanpa Durasi' }
+    { value: '1 Hour', label: '1 Hour' },
+    { value: '2 Hours', label: '2 Hours' },
+    { value: '3 Hours', label: '3 Hours' },
+    { value: '8 Hours', label: '8 Hours' },
+    { value: '10 Hours', label: '10 Hours' },
+    { value: '', label: 'No Duration' }
   ];
 
   const activityOptions = [
-    'Belajar & Kerja',
-    'Tidur Nyenyak',
-    'Santai & Redakan Stres',
-    'Fokus Membaca',
-    'Meditasi & Ketenangan'
+    'Study & Work',
+    'Deep Sleep',
+    'Relax & Stress Relief',
+    'Focus & Reading',
+    'Meditation & Calm'
   ];
 
   const thumbnailStyles = [
@@ -91,7 +91,7 @@ export const GeneratePage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-full bg-[#F5F5F7] text-slate-900 pb-36">
+    <div className="min-h-full bg-[#F5F5F7] text-slate-900 pb-28">
       {/* macOS Style Loading Modal */}
       {isGenerating && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-md flex items-center justify-center p-4">
@@ -306,15 +306,15 @@ export const GeneratePage: React.FC = () => {
             </div>
           </section>
 
-          {/* SECTION 5: Durasi & Aktivitas */}
+          {/* SECTION 5: Video Duration & Listener Activity */}
           <section className="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 space-y-5 shadow-[0_1px_3px_rgba(0,0,0,0.03)]">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Durasi */}
+              {/* Duration */}
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
                   <Clock className="w-4 h-4 text-amber-500" />
                   <h2 className="font-bold text-slate-900 text-sm sm:text-base">
-                    5. Durasi Video
+                    5. Video Duration
                   </h2>
                 </div>
 
@@ -342,17 +342,17 @@ export const GeneratePage: React.FC = () => {
                   type="text"
                   value={duration}
                   onChange={(e) => setDuration(e.target.value)}
-                  placeholder="Atau durasi kustom (contoh: '45 Menit')..."
+                  placeholder="Or custom duration (e.g. '45 Minutes', '4 Hours')..."
                   className="w-full px-3.5 py-2 text-xs bg-slate-50 rounded-xl border border-slate-200 focus:outline-hidden focus:bg-white focus:ring-1 focus:ring-slate-900 transition-all"
                 />
               </div>
 
-              {/* Aktivitas Penonton */}
+              {/* Listener Activity */}
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
                   <Activity className="w-4 h-4 text-amber-500" />
                   <h2 className="font-bold text-slate-900 text-sm sm:text-base">
-                    6. Aktivitas Penonton
+                    6. Listener Activity
                   </h2>
                 </div>
 
@@ -380,20 +380,20 @@ export const GeneratePage: React.FC = () => {
                   type="text"
                   value={useCase}
                   onChange={(e) => setUseCase(e.target.value)}
-                  placeholder="Atau aktivitas kustom (contoh: 'Menulis Jurnal')..."
+                  placeholder="Or custom activity (e.g. 'Journaling & Writing', 'Morning Flow')..."
                   className="w-full px-3.5 py-2 text-xs bg-slate-50 rounded-xl border border-slate-200 focus:outline-hidden focus:bg-white focus:ring-1 focus:ring-slate-900 transition-all"
                 />
               </div>
             </div>
           </section>
 
-          {/* SECTION 6: Kata Kunci / Konteks Tambahan */}
+          {/* SECTION 7: Additional Context (Optional) */}
           <section className="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 space-y-4 shadow-[0_1px_3px_rgba(0,0,0,0.03)]">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Tag className="w-4 h-4 text-amber-500" />
                 <h2 className="font-bold text-slate-900 text-base">
-                  7. Konteks Tambahan (Opsional)
+                  7. Additional Context (Optional)
                 </h2>
               </div>
               <span className="text-xs text-slate-400">
@@ -406,13 +406,13 @@ export const GeneratePage: React.FC = () => {
               value={optionalKeyword}
               onChange={(e) => setOptionalKeyword(e.target.value)}
               maxLength={120}
-              placeholder="Contoh: 'Hujan di Tokyo', 'Ruang Kerja Minimalis'..."
+              placeholder="e.g. 'Rain in Tokyo', 'Minimalist Cozy Workspace', 'Midnight Studio'..."
               className="w-full px-4 py-2.5 text-xs sm:text-sm bg-slate-50 rounded-xl border border-slate-200 focus:outline-hidden focus:bg-white focus:ring-1 focus:ring-slate-900 transition-all"
             />
 
-            {/* Chip Rekomendasi Cepat */}
+            {/* Quick Inspiration Chips */}
             <div className="flex flex-wrap items-center gap-1.5 pt-1">
-              <span className="text-xs text-slate-400 mr-1">Inspirasi:</span>
+              <span className="text-xs text-slate-400 mr-1">Inspiration:</span>
               {sampleKeywords.map((kw, i) => (
                 <button
                   type="button"
@@ -425,54 +425,36 @@ export const GeneratePage: React.FC = () => {
               ))}
             </div>
           </section>
+
+          {/* Hidden submit trigger to support pressing Enter in text inputs */}
+          <button
+            type="submit"
+            disabled={!isFormValid || isGenerating}
+            className="hidden"
+            aria-hidden="true"
+            tabIndex={-1}
+          />
         </form>
       </div>
 
-      {/* ========================================================================= */}
-      {/* TOMBOL UTAMA FLOATING (MELAYANG) & SELALU TERLIHAT DI SEMUA KONDISI SCROLL */}
-      {/* ========================================================================= */}
-      <div className="fixed bottom-0 left-0 right-0 md:left-64 z-40 p-3 sm:p-5 pointer-events-none">
-        <div className="max-w-4xl mx-auto pointer-events-auto">
-          <div className="p-3 sm:p-4 rounded-2xl sm:rounded-3xl bg-white/95 backdrop-blur-xl border border-slate-200/90 shadow-[0_16px_40px_rgba(0,0,0,0.14)] flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4 transition-all">
-            {/* Ringkasan Pilihan Aktif */}
-            <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto overflow-x-auto py-0.5">
-              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 text-xs font-semibold text-slate-800 shrink-0">
-                <span className="text-base leading-none">{currentCategory.iconEmoji}</span>
-                <span className="truncate max-w-[130px] sm:max-w-[180px]">{currentCategory.name}</span>
-              </div>
-
-              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 text-xs font-semibold text-slate-700 shrink-0">
-                <span className="truncate max-w-[120px] sm:max-w-[160px]">{selectedSubGenre}</span>
-              </div>
-
-              <div className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 text-xs font-semibold text-slate-700 shrink-0">
-                <span>{selectedMoods.length} Mood</span>
-              </div>
-
-              <div className="hidden xl:flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 text-[11px] font-semibold text-emerald-700 border border-emerald-200/60 shrink-0">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                <span>Gemini 3.8 Flash</span>
-              </div>
-            </div>
-
-            {/* Tombol Besar & Ikonik "Forge Content (1 Klik)" */}
-            <button
-              type="button"
-              onClick={handleForge}
-              disabled={!isFormValid || isGenerating}
-              className={`w-full sm:w-auto inline-flex items-center justify-center gap-3 px-8 sm:px-10 py-3.5 sm:py-4 rounded-2xl text-base sm:text-lg font-bold transition-all shadow-[0_4px_16px_rgba(245,158,11,0.35)] cursor-pointer shrink-0 ${
-                isFormValid && !isGenerating
-                  ? 'bg-amber-500 hover:bg-amber-400 text-slate-950 active:scale-[0.98]'
-                  : 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none'
-              }`}
-            >
-              <Wand2 className="w-5 h-5 sm:w-6 sm:h-6 shrink-0" />
-              <span>Forge Content (1 Klik)</span>
-              <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-amber-950/70 shrink-0" />
-            </button>
-          </div>
-        </div>
-      </div>
+      {/* Tombol Mengambang "Forge Konten Baru" — Selalu terlihat di semua kondisi scroll */}
+      <aside aria-label="Aksi Cepat Forge" className="fixed bottom-6 right-6 z-40 print:hidden">
+        <button
+          type="button"
+          id="btn-floating-forge-generate"
+          onClick={handleForge}
+          disabled={!isFormValid || isGenerating}
+          className={`group inline-flex items-center gap-2 px-5 py-3 rounded-full font-bold text-xs sm:text-sm shadow-xl transition-all border cursor-pointer ${
+            isFormValid && !isGenerating
+              ? 'bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-amber-500/25 hover:shadow-2xl hover:shadow-amber-500/35 hover:-translate-y-0.5 active:scale-95 border-amber-400/60'
+              : 'bg-slate-200 text-slate-400 border-slate-300 cursor-not-allowed shadow-none'
+          }`}
+          title="Forge Konten Baru"
+        >
+          <Wand2 className={`w-4 h-4 transition-transform ${isGenerating ? 'animate-spin' : 'group-hover:rotate-12'}`} />
+          <span>{isGenerating ? 'Memproses...' : 'Forge Konten Baru'}</span>
+        </button>
+      </aside>
     </div>
   );
 };

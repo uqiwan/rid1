@@ -74,7 +74,7 @@ export const HistoryPage: React.FC = () => {
           className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-slate-900 hover:bg-slate-800 text-white text-xs font-medium cursor-pointer transition-all shadow-sm self-start sm:self-auto"
         >
           <Wand2 className="w-3.5 h-3.5 text-amber-400" />
-          <span>+ Forge Paket Baru</span>
+          <span>Forge Paket Baru</span>
         </button>
       </div>
 

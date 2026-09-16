@@ -54,7 +54,7 @@ export const DashboardOverview: React.FC = () => {
           className="inline-flex items-center gap-2.5 px-6 py-3 rounded-full bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs sm:text-sm transition-all shadow-md hover:shadow-lg cursor-pointer shrink-0"
         >
           <Wand2 className="w-4 h-4" />
-          <span>+ Forge Paket Baru</span>
+          <span>Forge Paket Baru</span>
         </button>
       </div>
 
