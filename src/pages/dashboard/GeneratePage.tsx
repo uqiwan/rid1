@@ -2,14 +2,17 @@ import React, { useState } from 'react';
 import { 
   Wand2, 
   Sparkles, 
-  Compass, 
-  Layers, 
-  HelpCircle, 
-  ArrowRight, 
   Check, 
-  RefreshCw,
-  Info,
-  Search
+  RefreshCw, 
+  Search, 
+  X, 
+  Clock, 
+  Activity, 
+  Tag, 
+  Palette, 
+  Smile, 
+  Music, 
+  Layers
 } from 'lucide-react';
 import { useTuneForgeStore } from '../../store/useTuneForgeStore';
 
@@ -19,6 +22,7 @@ export const GeneratePage: React.FC = () => {
     selectedCategoryId, 
     selectedSubGenre, 
     selectedMoods, 
+    selectedThumbnailStyle,
     duration,
     useCase,
     optionalKeyword, 
@@ -27,6 +31,7 @@ export const GeneratePage: React.FC = () => {
     setSelectedCategory, 
     setSelectedSubGenre, 
     toggleMood, 
+    setSelectedThumbnailStyle,
     setDuration,
     setUseCase,
     setOptionalKeyword, 
@@ -40,368 +45,434 @@ export const GeneratePage: React.FC = () => {
   const currentCategory = categories.find((c) => c.id === selectedCategoryId) || categories[0];
 
   const filteredCategories = categories.filter((c) => 
-    c.name.toLowerCase().includes(categorySearch.toLowerCase()) ||
-    c.description.toLowerCase().includes(categorySearch.toLowerCase())
+    c.name.toLowerCase().includes(categorySearch.toLowerCase())
   );
 
   const sampleKeywords = [
-    'rainy night in tokyo',
-    'deep coding focus',
-    'autumn leaves coffee',
-    'starry night camping',
-    'morning meditation 432Hz',
-    'cyberpunk shibuya alley'
+    'Hujan di Tokyo',
+    'Coding Malam Hari',
+    'Kedai Kopi Santai',
+    'Meditasi Tenang',
+    'Musim Gugur & Senja'
   ];
+
+  const durationOptions = [
+    { value: '1 Jam', label: '1 Jam' },
+    { value: '2 Jam', label: '2 Jam' },
+    { value: '3 Jam', label: '3 Jam' },
+    { value: '8 Jam', label: '8 Jam' },
+    { value: '10 Jam', label: '10 Jam' },
+    { value: '', label: 'Tanpa Durasi' }
+  ];
+
+  const activityOptions = [
+    'Belajar & Kerja',
+    'Tidur Nyenyak',
+    'Santai & Redakan Stres',
+    'Fokus Membaca',
+    'Meditasi & Ketenangan'
+  ];
+
+  const thumbnailStyles = [
+    { id: 'all', label: 'Semua Gaya', tag: '4 Varian' },
+    { id: 'cinematic', label: 'Sinematik', tag: 'Widescreen' },
+    { id: 'split', label: 'Komposisi Terbelah', tag: 'Dua Suasana' },
+    { id: 'minimal', label: 'Tipografi Minimalis', tag: 'Ruang Negatif' },
+    { id: 'lifestyle', label: 'Gaya Hidup', tag: 'Emosi Nyata' }
+  ];
+
+  const isFormValid = Boolean(selectedCategoryId && selectedSubGenre && selectedMoods.length > 0);
 
   const handleForge = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedCategoryId || !selectedSubGenre || selectedMoods.length === 0) {
-      return;
-    }
+    if (!isFormValid || isGenerating) return;
     const newId = await forgeNewPackage();
     navigate(`/generate/result/${newId}`);
   };
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 max-w-6xl mx-auto">
-      {/* Generating Progress Modal Overlay */}
+    <div className="min-h-full bg-[#F5F5F7] text-slate-900 pb-36">
+      {/* macOS Style Loading Modal */}
       {isGenerating && (
-        <div className="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl p-8 max-w-md w-full shadow-2xl border border-slate-200 text-center space-y-5 animate-in fade-in zoom-in duration-200">
-            <div className="w-14 h-14 rounded-2xl bg-amber-500 text-slate-950 flex items-center justify-center mx-auto shadow-md animate-spin duration-1000">
-              <RefreshCw className="w-7 h-7" />
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-[0_24px_50px_rgba(0,0,0,0.18)] border border-slate-200/80 text-center space-y-5 animate-in fade-in zoom-in-95 duration-200">
+            <div className="w-16 h-16 rounded-2xl bg-slate-900 text-white flex items-center justify-center mx-auto shadow-md">
+              <RefreshCw className="w-8 h-8 animate-spin text-amber-400" />
             </div>
 
-            <div className="space-y-2">
-              <h3 className="font-display font-bold text-xl text-slate-900">
-                Membuat Paket Konten YouTube...
+            <div className="space-y-1.5">
+              <h3 className="font-semibold text-lg text-slate-900">
+                Memproses Paket Konten...
               </h3>
-              <p className="text-xs font-mono text-amber-700 bg-amber-50 py-1.5 px-3 rounded-md border border-amber-200/80">
-                {generationStepMessage || 'Menyiapkan arsitektur output...'}
+              <p className="text-xs text-slate-500 font-medium">
+                {generationStepMessage || 'Menyiapkan arsitektur output YouTube...'}
               </p>
             </div>
 
-            {/* Simulated steps */}
-            <div className="space-y-2 pt-2 text-left text-xs text-slate-500 border-t border-slate-100">
-              <div className="flex items-center gap-2 text-slate-700 font-medium">
-                <Check className="w-4 h-4 text-emerald-600" />
-                <span>Grounding 18 Knowledge Base Kategori</span>
-              </div>
-              <div className="flex items-center gap-2 text-slate-700 font-medium">
-                <Check className="w-4 h-4 text-emerald-600" />
-                <span>Optimasi Search Intent Tier-1 US</span>
-              </div>
-              <div className="flex items-center gap-2 text-slate-700 font-medium">
-                <Check className="w-4 h-4 text-emerald-600" />
-                <span>Kompilasi 4 Gaya Prompt Thumbnail &amp; Video Loop</span>
-              </div>
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 text-[11px] font-medium text-slate-600">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span>Model: Gemini 3.8 Flash</span>
             </div>
           </div>
         </div>
       )}
 
-      {/* Header */}
-      <div className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 text-slate-700 text-xs font-semibold mb-2">
-            <Wand2 className="w-3.5 h-3.5 text-amber-500" />
-            <span>AI Forge Engine</span>
-          </div>
-          <h1 className="font-display font-bold text-2xl sm:text-3xl text-slate-900 tracking-tight">
-            Forge Paket Konten Musik Baru
-          </h1>
-          <p className="text-slate-600 text-xs sm:text-sm mt-1">
-            Konfigurasikan kategori, sub-genre, dan mood untuk menghasilkan 7 blok output siap pakai.
-          </p>
-        </div>
-
-        <button
-          type="button"
-          onClick={resetForm}
-          className="text-xs text-slate-500 hover:text-slate-900 px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 cursor-pointer self-start sm:self-auto"
-        >
-          Reset Pilihan
-        </button>
-      </div>
-
-      <form onSubmit={handleForge} className="space-y-8">
-        {/* Step 1: 18 Categories Selection */}
-        <div className="p-6 bg-white rounded-2xl border border-slate-200 space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-100">
-            <div>
-              <span className="text-[11px] font-bold uppercase tracking-wider text-amber-600 block">
-                Langkah 1 (Wajib)
-              </span>
-              <h2 className="font-display font-bold text-base text-slate-900">
-                Pilih 1 dari 18 Kategori Musik Instrumental
-              </h2>
-            </div>
-
-            {/* Quick search input */}
-            <div className="relative max-w-xs w-full">
-              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                value={categorySearch}
-                onChange={(e) => setCategorySearch(e.target.value)}
-                placeholder="Cari kategori..."
-                className="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 rounded-lg border border-slate-200 focus:outline-hidden focus:ring-1 focus:ring-amber-500"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-2.5">
-            {filteredCategories.map((cat) => {
-              const isSelected = cat.id === selectedCategoryId;
-              return (
-                <button
-                  type="button"
-                  key={cat.id}
-                  onClick={() => setSelectedCategory(cat.id)}
-                  className={`p-2.5 rounded-xl border text-left cursor-pointer transition-all flex items-center gap-2 relative ${
-                    isSelected
-                      ? 'border-amber-500 bg-amber-50/80 shadow-xs ring-1 ring-amber-500'
-                      : 'border-slate-200 hover:border-slate-300 bg-white hover:bg-slate-50'
-                  }`}
-                >
-                  <span className="text-xl shrink-0">{cat.iconEmoji}</span>
-                  <div className="min-w-0 flex-1">
-                    <p className={`text-xs font-bold truncate ${isSelected ? 'text-amber-950' : 'text-slate-900'}`}>
-                      {cat.name}
-                    </p>
-                    <span className="text-[10px] text-slate-400 block font-mono">
-                      {cat.subGenres.length} Genre
-                    </span>
-                  </div>
-                  {isSelected && <Check className="w-3.5 h-3.5 text-amber-600 shrink-0" />}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Step 2: Sub-genre Selection */}
-        <div className="p-6 bg-white rounded-2xl border border-slate-200 space-y-4">
-          <div className="pb-3 border-b border-slate-100">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-amber-600 block">
-              Langkah 2 (Wajib)
-            </span>
-            <h2 className="font-display font-bold text-base text-slate-900">
-              Pilih Sub-Genre untuk: <span className="text-amber-700">{currentCategory.name}</span>
-            </h2>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Sub-genre otomatis dimuat dari knowledge base sesuai riset retensi YouTube.
+      {/* Main Content Area */}
+      <div className="p-4 sm:p-6 lg:p-8 max-w-5xl mx-auto space-y-6">
+        {/* Header Bersih & Ringkas */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
+          <div>
+            <h1 className="font-bold text-2xl sm:text-3xl text-slate-900 tracking-tight">
+              Forge Paket Konten Musik
+            </h1>
+            <p className="text-slate-500 text-xs sm:text-sm mt-0.5">
+              Pilih konfigurasi musik untuk menghasilkan paket konten YouTube siap pakai.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {currentCategory.subGenres.map((sg) => {
-              const isSelected = sg === selectedSubGenre;
-              return (
-                <button
-                  type="button"
-                  key={sg}
-                  onClick={() => setSelectedSubGenre(sg)}
-                  className={`p-3 rounded-xl border text-left cursor-pointer transition-all flex items-center justify-between ${
-                    isSelected
-                      ? 'border-slate-900 bg-slate-900 text-white'
-                      : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-800'
-                  }`}
-                >
-                  <span className="text-xs font-medium">{sg}</span>
-                  {isSelected && <Check className="w-3.5 h-3.5 text-amber-400" />}
-                </button>
-              );
-            })}
-          </div>
+          <button
+            type="button"
+            onClick={resetForm}
+            className="self-start sm:self-auto text-xs font-semibold text-slate-600 hover:text-slate-900 px-3.5 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 shadow-2xs transition-colors cursor-pointer"
+          >
+            Reset Pilihan
+          </button>
         </div>
 
-        {/* Step 3: Moods (1-3 Multi-Select) */}
-        <div className="p-6 bg-white rounded-2xl border border-slate-200 space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-            <div>
-              <span className="text-[11px] font-bold uppercase tracking-wider text-amber-600 block">
-                Langkah 3 (Wajib)
-              </span>
-              <h2 className="font-display font-bold text-base text-slate-900">
-                Pilih Mood Emosional (1 hingga 3 Pilihan)
-              </h2>
-            </div>
-            <span className="text-xs font-mono text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
-              {selectedMoods.length}/3 Terpilih
-            </span>
-          </div>
+        <form onSubmit={handleForge} className="space-y-6">
+          {/* SECTION 1: Kategori Musik */}
+          <section className="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 space-y-4 shadow-[0_1px_3px_rgba(0,0,0,0.03)]">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <Music className="w-4 h-4 text-amber-500" />
+                <h2 className="font-bold text-slate-900 text-base">
+                  1. Kategori Musik
+                </h2>
+              </div>
 
-          <div className="flex flex-wrap gap-2">
-            {currentCategory.moods.map((mood) => {
-              const isSelected = selectedMoods.includes(mood);
-              return (
-                <button
-                  type="button"
-                  key={mood}
-                  onClick={() => toggleMood(mood)}
-                  className={`px-4 py-2 rounded-full text-xs font-medium cursor-pointer transition-all ${
-                    isSelected
-                      ? 'bg-amber-500 text-slate-950 font-semibold shadow-xs ring-2 ring-amber-400/40'
-                      : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
-                  }`}
-                >
-                  {mood} {isSelected && '✓'}
-                </button>
-              );
-            })}
-          </div>
-          <p className="text-[11px] text-slate-400 italic">
-            *Minimal 1 mood, maksimal 3 mood untuk menjaga fokus output visual dan audio prompt.
-          </p>
-        </div>
-
-        {/* Step 4: Video Duration & Use-Case (Opsional Formula Wajib) */}
-        <div className="p-6 bg-white rounded-2xl border border-slate-200 space-y-5">
-          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-            <div>
-              <span className="text-[11px] font-bold uppercase tracking-wider text-amber-600 block">
-                Langkah 4 (Opsional — Algoritma & SEO YouTube)
-              </span>
-              <h2 className="font-display font-bold text-base text-slate-900">
-                Durasi Video & Use-Case / Aktivitas Penonton
-              </h2>
-            </div>
-            <span className="text-[11px] font-medium text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full">
-              Formula: [Mood] + [Genre] + [Aktivitas] + (Durasi)
-            </span>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {/* Durasi */}
-            <div>
-              <label className="text-xs font-bold text-slate-800 block mb-1.5">
-                Target Durasi Video (Jujur sesuai konten):
-              </label>
-              <div className="flex flex-wrap gap-2 mb-2">
-                {['1 Hour', '2 Hours', '3 Hours', '8 Hours', '10 Hours', 'No Mention'].map((d) => (
+              {/* Pencarian Kategori Cepat */}
+              <div className="relative max-w-xs w-full">
+                <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  value={categorySearch}
+                  onChange={(e) => setCategorySearch(e.target.value)}
+                  placeholder="Cari kategori..."
+                  className="w-full pl-8 pr-8 py-1.5 text-xs bg-slate-50 rounded-xl border border-slate-200 focus:outline-hidden focus:bg-white focus:ring-1 focus:ring-slate-900 transition-all"
+                />
+                {categorySearch && (
                   <button
-                    key={d}
                     type="button"
-                    onClick={() => setDuration(d === 'No Mention' ? '' : d)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer transition-all border ${
-                      (duration === d || (!duration && d === 'No Mention'))
-                        ? 'bg-amber-500 text-slate-950 border-amber-500 shadow-xs'
-                        : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
+                    onClick={() => setCategorySearch('')}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Grid 18 Kategori Tombol Besar */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2.5">
+              {filteredCategories.map((cat) => {
+                const isSelected = cat.id === selectedCategoryId;
+                return (
+                  <button
+                    type="button"
+                    key={cat.id}
+                    onClick={() => setSelectedCategory(cat.id)}
+                    className={`p-3 rounded-xl border text-left cursor-pointer transition-all flex items-center gap-2.5 min-h-[58px] ${
+                      isSelected
+                        ? 'border-slate-900 bg-slate-900 text-white shadow-xs'
+                        : 'border-slate-200 hover:border-slate-300 bg-slate-50/50 hover:bg-slate-100 text-slate-800'
                     }`}
                   >
-                    {d}
+                    <span className="text-xl shrink-0 leading-none">{cat.iconEmoji}</span>
+                    <span className={`text-xs font-semibold leading-snug line-clamp-2 ${isSelected ? 'text-white' : 'text-slate-900'}`}>
+                      {cat.name}
+                    </span>
                   </button>
-                ))}
-              </div>
-              <input
-                type="text"
-                value={duration}
-                onChange={(e) => setDuration(e.target.value)}
-                placeholder="Atau ketik kustom: misal '3 Hours', '45 Mins'..."
-                className="w-full px-3 py-1.5 text-xs bg-slate-50 rounded-lg border border-slate-200 focus:outline-hidden focus:ring-1 focus:ring-amber-500"
-              />
+                );
+              })}
             </div>
+          </section>
 
-            {/* Use-Case / Aktivitas Umum */}
-            <div>
-              <label className="text-xs font-bold text-slate-800 block mb-1.5">
-                Use-Case / Aktivitas Penonton (Keyword Umum High-Volume):
-              </label>
-              <div className="flex flex-wrap gap-2 mb-2">
-                {['Study & Sleep', 'Deep Work & Coding', 'Relaxing & Stress Relief', 'Focus & Reading', 'Meditation & Calm'].map((uc) => (
-                  <button
-                    key={uc}
-                    type="button"
-                    onClick={() => setUseCase(uc)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer transition-all border ${
-                      useCase === uc
-                        ? 'bg-amber-500 text-slate-950 border-amber-500 shadow-xs'
-                        : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
-                    }`}
-                  >
-                    {uc}
-                  </button>
-                ))}
-              </div>
-              <input
-                type="text"
-                value={useCase}
-                onChange={(e) => setUseCase(e.target.value)}
-                placeholder="Atau ketik kustom: misal 'Morning Routine', 'Coffee Break'..."
-                className="w-full px-3 py-1.5 text-xs bg-slate-50 rounded-lg border border-slate-200 focus:outline-hidden focus:ring-1 focus:ring-amber-500"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Step 5: Optional Keyword Context */}
-        <div className="p-6 bg-white rounded-2xl border border-slate-200 space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-            <div>
-              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block">
-                Langkah 5 (Opsional)
-              </span>
-              <h2 className="font-display font-bold text-base text-slate-900">
-                Kata Kunci Spesifik / Konteks Tambahan
+          {/* SECTION 2: Sub-Genre */}
+          <section className="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 space-y-4 shadow-[0_1px_3px_rgba(0,0,0,0.03)]">
+            <div className="flex items-center gap-2">
+              <Layers className="w-4 h-4 text-amber-500" />
+              <h2 className="font-bold text-slate-900 text-base">
+                2. Sub-Genre: <span className="text-slate-500 font-normal">{currentCategory.name}</span>
               </h2>
             </div>
-            <span className="text-xs font-mono text-slate-400">
-              {optionalKeyword.length}/120 Karakter
-            </span>
-          </div>
 
-          <textarea
-            value={optionalKeyword}
-            onChange={(e) => setOptionalKeyword(e.target.value)}
-            maxLength={120}
-            rows={2}
-            placeholder="Contoh: 'rainy night in tokyo', 'coding focus pomodoro', 'wedding banquet', 'winter snowfall'..."
-            className="w-full p-3 rounded-xl border border-slate-200 bg-slate-50/50 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-hidden focus:ring-1 focus:ring-amber-500 leading-relaxed font-mono"
-          />
+            {/* Tombol Sub-Genre Besar & Mudah Diklik */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
+              {currentCategory.subGenres.map((sg) => {
+                const isSelected = sg === selectedSubGenre;
+                return (
+                  <button
+                    type="button"
+                    key={sg}
+                    onClick={() => setSelectedSubGenre(sg)}
+                    className={`px-4 py-3.5 rounded-xl border text-left cursor-pointer transition-all flex items-center justify-between min-h-[50px] ${
+                      isSelected
+                        ? 'border-slate-900 bg-slate-900 text-white shadow-xs'
+                        : 'border-slate-200 hover:border-slate-300 bg-slate-50/50 hover:bg-slate-100 text-slate-800'
+                    }`}
+                  >
+                    <span className="text-xs sm:text-sm font-semibold">{sg}</span>
+                    {isSelected && <Check className="w-4 h-4 text-amber-400 shrink-0" />}
+                  </button>
+                );
+              })}
+            </div>
+          </section>
 
-          {/* Sample quick chips */}
-          <div className="space-y-1.5">
-            <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400 block">
-              Inspirasi Cepat:
-            </span>
-            <div className="flex flex-wrap gap-1.5">
+          {/* SECTION 3: Suasana (Mood) */}
+          <section className="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 space-y-4 shadow-[0_1px_3px_rgba(0,0,0,0.03)]">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Smile className="w-4 h-4 text-amber-500" />
+                <h2 className="font-bold text-slate-900 text-base">
+                  3. Suasana (Mood)
+                </h2>
+              </div>
+              <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-slate-100 text-slate-700">
+                {selectedMoods.length}/3 Terpilih
+              </span>
+            </div>
+
+            {/* Pills Mood Besar */}
+            <div className="flex flex-wrap gap-2.5">
+              {currentCategory.moods.map((mood) => {
+                const isSelected = selectedMoods.includes(mood);
+                return (
+                  <button
+                    type="button"
+                    key={mood}
+                    onClick={() => toggleMood(mood)}
+                    className={`px-5 py-2.5 rounded-full text-xs sm:text-sm font-semibold cursor-pointer transition-all flex items-center gap-1.5 ${
+                      isSelected
+                        ? 'bg-slate-900 text-white shadow-xs'
+                        : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                    }`}
+                  >
+                    <span>{mood}</span>
+                    {isSelected && <Check className="w-3.5 h-3.5 text-amber-400" />}
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+
+          {/* SECTION 4: Gaya Thumbnail */}
+          <section className="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 space-y-4 shadow-[0_1px_3px_rgba(0,0,0,0.03)]">
+            <div className="flex items-center gap-2">
+              <Palette className="w-4 h-4 text-amber-500" />
+              <h2 className="font-bold text-slate-900 text-base">
+                4. Gaya Thumbnail
+              </h2>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5">
+              {thumbnailStyles.map((style) => {
+                const isSelected = selectedThumbnailStyle === style.id;
+                return (
+                  <button
+                    type="button"
+                    key={style.id}
+                    onClick={() => setSelectedThumbnailStyle(style.id as any)}
+                    className={`p-3.5 rounded-xl border text-left cursor-pointer transition-all flex flex-col justify-between min-h-[74px] ${
+                      isSelected
+                        ? 'border-slate-900 bg-slate-900 text-white shadow-xs'
+                        : 'border-slate-200 hover:border-slate-300 bg-slate-50/50 hover:bg-slate-100 text-slate-800'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between w-full">
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                        isSelected ? 'bg-white/20 text-white' : 'bg-slate-200/80 text-slate-600'
+                      }`}>
+                        {style.tag}
+                      </span>
+                      {isSelected && <Check className="w-3.5 h-3.5 text-amber-400" />}
+                    </div>
+                    <span className="font-bold text-xs sm:text-sm mt-2">
+                      {style.label}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+
+          {/* SECTION 5: Durasi & Aktivitas */}
+          <section className="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 space-y-5 shadow-[0_1px_3px_rgba(0,0,0,0.03)]">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Durasi */}
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-amber-500" />
+                  <h2 className="font-bold text-slate-900 text-sm sm:text-base">
+                    5. Durasi Video
+                  </h2>
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  {durationOptions.map((opt) => {
+                    const isSelected = (duration === opt.value) || (!duration && opt.value === '');
+                    return (
+                      <button
+                        key={opt.label}
+                        type="button"
+                        onClick={() => setDuration(opt.value)}
+                        className={`px-3.5 py-2 rounded-xl text-xs font-semibold cursor-pointer transition-all border ${
+                          isSelected
+                            ? 'bg-slate-900 text-white border-slate-900 shadow-xs'
+                            : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
+                        }`}
+                      >
+                        {opt.label}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <input
+                  type="text"
+                  value={duration}
+                  onChange={(e) => setDuration(e.target.value)}
+                  placeholder="Atau durasi kustom (contoh: '45 Menit')..."
+                  className="w-full px-3.5 py-2 text-xs bg-slate-50 rounded-xl border border-slate-200 focus:outline-hidden focus:bg-white focus:ring-1 focus:ring-slate-900 transition-all"
+                />
+              </div>
+
+              {/* Aktivitas Penonton */}
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <Activity className="w-4 h-4 text-amber-500" />
+                  <h2 className="font-bold text-slate-900 text-sm sm:text-base">
+                    6. Aktivitas Penonton
+                  </h2>
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  {activityOptions.map((act) => {
+                    const isSelected = useCase === act;
+                    return (
+                      <button
+                        key={act}
+                        type="button"
+                        onClick={() => setUseCase(act)}
+                        className={`px-3.5 py-2 rounded-xl text-xs font-semibold cursor-pointer transition-all border ${
+                          isSelected
+                            ? 'bg-slate-900 text-white border-slate-900 shadow-xs'
+                            : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
+                        }`}
+                      >
+                        {act}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <input
+                  type="text"
+                  value={useCase}
+                  onChange={(e) => setUseCase(e.target.value)}
+                  placeholder="Atau aktivitas kustom (contoh: 'Menulis Jurnal')..."
+                  className="w-full px-3.5 py-2 text-xs bg-slate-50 rounded-xl border border-slate-200 focus:outline-hidden focus:bg-white focus:ring-1 focus:ring-slate-900 transition-all"
+                />
+              </div>
+            </div>
+          </section>
+
+          {/* SECTION 6: Kata Kunci / Konteks Tambahan */}
+          <section className="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 space-y-4 shadow-[0_1px_3px_rgba(0,0,0,0.03)]">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Tag className="w-4 h-4 text-amber-500" />
+                <h2 className="font-bold text-slate-900 text-base">
+                  7. Konteks Tambahan (Opsional)
+                </h2>
+              </div>
+              <span className="text-xs text-slate-400">
+                {optionalKeyword.length}/120
+              </span>
+            </div>
+
+            <input
+              type="text"
+              value={optionalKeyword}
+              onChange={(e) => setOptionalKeyword(e.target.value)}
+              maxLength={120}
+              placeholder="Contoh: 'Hujan di Tokyo', 'Ruang Kerja Minimalis'..."
+              className="w-full px-4 py-2.5 text-xs sm:text-sm bg-slate-50 rounded-xl border border-slate-200 focus:outline-hidden focus:bg-white focus:ring-1 focus:ring-slate-900 transition-all"
+            />
+
+            {/* Chip Rekomendasi Cepat */}
+            <div className="flex flex-wrap items-center gap-1.5 pt-1">
+              <span className="text-xs text-slate-400 mr-1">Inspirasi:</span>
               {sampleKeywords.map((kw, i) => (
                 <button
                   type="button"
                   key={i}
                   onClick={() => setOptionalKeyword(kw)}
-                  className="px-2.5 py-1 rounded-md bg-slate-100 hover:bg-slate-200 text-[11px] text-slate-600 transition-colors cursor-pointer"
+                  className="px-3 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-xs text-slate-600 transition-colors cursor-pointer"
                 >
                   + {kw}
                 </button>
               ))}
             </div>
+          </section>
+        </form>
+      </div>
+
+      {/* ========================================================================= */}
+      {/* TOMBOL UTAMA FLOATING (MELAYANG) & SELALU TERLIHAT DI SEMUA KONDISI SCROLL */}
+      {/* ========================================================================= */}
+      <div className="fixed bottom-0 left-0 right-0 md:left-64 z-40 p-3 sm:p-5 pointer-events-none">
+        <div className="max-w-4xl mx-auto pointer-events-auto">
+          <div className="p-3 sm:p-4 rounded-2xl sm:rounded-3xl bg-white/95 backdrop-blur-xl border border-slate-200/90 shadow-[0_16px_40px_rgba(0,0,0,0.14)] flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4 transition-all">
+            {/* Ringkasan Pilihan Aktif */}
+            <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto overflow-x-auto py-0.5">
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 text-xs font-semibold text-slate-800 shrink-0">
+                <span className="text-base leading-none">{currentCategory.iconEmoji}</span>
+                <span className="truncate max-w-[130px] sm:max-w-[180px]">{currentCategory.name}</span>
+              </div>
+
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 text-xs font-semibold text-slate-700 shrink-0">
+                <span className="truncate max-w-[120px] sm:max-w-[160px]">{selectedSubGenre}</span>
+              </div>
+
+              <div className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 text-xs font-semibold text-slate-700 shrink-0">
+                <span>{selectedMoods.length} Mood</span>
+              </div>
+
+              <div className="hidden xl:flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 text-[11px] font-semibold text-emerald-700 border border-emerald-200/60 shrink-0">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span>Gemini 3.8 Flash</span>
+              </div>
+            </div>
+
+            {/* Tombol Besar & Ikonik "Forge Content (1 Klik)" */}
+            <button
+              type="button"
+              onClick={handleForge}
+              disabled={!isFormValid || isGenerating}
+              className={`w-full sm:w-auto inline-flex items-center justify-center gap-3 px-8 sm:px-10 py-3.5 sm:py-4 rounded-2xl text-base sm:text-lg font-bold transition-all shadow-[0_4px_16px_rgba(245,158,11,0.35)] cursor-pointer shrink-0 ${
+                isFormValid && !isGenerating
+                  ? 'bg-amber-500 hover:bg-amber-400 text-slate-950 active:scale-[0.98]'
+                  : 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none'
+              }`}
+            >
+              <Wand2 className="w-5 h-5 sm:w-6 sm:h-6 shrink-0" />
+              <span>Forge Content (1 Klik)</span>
+              <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-amber-950/70 shrink-0" />
+            </button>
           </div>
         </div>
-
-        {/* Submit Forge Button */}
-        <div className="p-6 bg-slate-900 text-white rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4 shadow-md">
-          <div>
-            <h3 className="font-display font-bold text-base text-white">
-              Siap Mengompilasi 7 Blok Output?
-            </h3>
-            <p className="text-xs text-slate-400">
-              Kategori: <strong className="text-amber-300">{currentCategory.name}</strong> • Sub-genre: <strong className="text-slate-200">{selectedSubGenre}</strong>
-            </p>
-          </div>
-
-          <button
-            type="submit"
-            disabled={isGenerating || !selectedSubGenre || selectedMoods.length === 0}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-8 py-3.5 rounded-full bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-slate-950 font-bold text-sm transition-all shadow-md hover:shadow-lg cursor-pointer shrink-0"
-          >
-            <Wand2 className="w-4 h-4" />
-            <span>Forge Content (1 Klik)</span>
-            <ArrowRight className="w-4 h-4" />
-          </button>
-        </div>
-      </form>
+      </div>
     </div>
   );
 };

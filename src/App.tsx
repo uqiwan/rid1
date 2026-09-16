@@ -5,6 +5,7 @@ import { Footer } from './components/layout/Footer';
 import { DashboardSidebar } from './components/layout/DashboardSidebar';
 import { DashboardHeader } from './components/layout/DashboardHeader';
 import { GlobalToast } from './components/ui/CopyButton';
+import { OfflineIndicator } from './components/pwa/OfflineIndicator';
 
 // Public Pages
 import { LandingPage } from './pages/public/LandingPage';
@@ -96,6 +97,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-white text-slate-900 font-sans flex flex-col antialiased selection:bg-amber-100 selection:text-amber-900">
       <GlobalToast />
+      <OfflineIndicator />
 
       {isDashboardRoute ? (
         // DASHBOARD & ADMIN LAYOUT (Persistent 240px Sidebar + Mobile Drawer)

@@ -228,10 +228,18 @@ export function generateRefinedTitleVariants(input: TitleGenerationInput): Title
     };
   }
 
-  // Tag only the top one as Rekomendasi Utama if score >95%
-  evaluated.forEach((v, idx) => {
-    v.isPrimaryRecommendation = idx === 0 && v.score > 95;
+  // Strictly 3 variants as requested: Rekomendasi Utama, Rekomendasi Alternatif 1, Rekomendasi Alternatif 2
+  const top3 = evaluated.slice(0, 3);
+  const labels: ('Rekomendasi Utama' | 'Rekomendasi Alternatif 1' | 'Rekomendasi Alternatif 2')[] = [
+    'Rekomendasi Utama',
+    'Rekomendasi Alternatif 1',
+    'Rekomendasi Alternatif 2'
+  ];
+
+  top3.forEach((v, idx) => {
+    v.isPrimaryRecommendation = idx === 0;
+    v.variantLabel = labels[idx];
   });
 
-  return evaluated;
+  return top3;
 }

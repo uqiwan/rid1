@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { Menu, Wand2, ArrowLeft, Shield, Sparkles } from 'lucide-react';
 import { useTuneForgeStore } from '../../store/useTuneForgeStore';
+import { PWAInstallButton } from '../pwa/PWAInstallButton';
 
 interface DashboardHeaderProps {
   onToggleMobileMenu: () => void;
@@ -67,7 +68,10 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onToggleMobile
         </div>
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2.5 sm:gap-3">
+        {/* PWA Install Button */}
+        <PWAInstallButton />
+
         <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 bg-slate-100 rounded-full text-[11px] text-slate-600 border border-slate-200">
           <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
           <Sparkles className="w-3 h-3 text-amber-600" />
@@ -77,7 +81,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onToggleMobile
         {currentRoute !== '/generate' && (
           <button
             onClick={() => navigate('/generate')}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-500 hover:bg-amber-600 text-white text-xs font-medium cursor-pointer transition-all shadow-sm"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold cursor-pointer transition-all shadow-xs"
           >
             <Wand2 className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">Forge Konten Baru</span>
@@ -88,3 +92,4 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onToggleMobile
     </header>
   );
 };
+

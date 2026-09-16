@@ -2,6 +2,7 @@ import { GoogleGenAI } from '@google/genai';
 import { ContentPackage } from '../src/types';
 import { generateRefinedTitleVariants } from '../src/data/titleFormulaEngine';
 import { generateEngineeredThumbnailPrompts } from '../src/data/thumbnailPromptEngine';
+import { generateGoogleFlowPrompts } from '../src/data/googleFlowEngine';
 
 let genAIClient: GoogleGenAI | null = null;
 
@@ -28,6 +29,7 @@ export interface ForgeInput {
   categoryName: string;
   subGenre: string;
   moods: string[];
+  preferredThumbnailStyle?: 'all' | 'cinematic' | 'split' | 'minimal' | 'lifestyle';
   duration?: string; // e.g. "1 Hour", "3 Hours", "8 Hours"
   useCase?: string; // e.g. "Study & Coding", "Deep Sleep", "Meditation"
   optionalKeyword?: string;
@@ -67,36 +69,60 @@ Everything must strictly adhere to the following 7 blocks:
          "formulaCompliance": number // max 15
        }
      }
-   - titleA: The #1 top-scoring title variant (Rekomendasi Utama)
-   - titleB: The #2 title variant
-   - titleC: The #3 title variant
+   - titleA: Rekomendasi Utama (highest scoring variant > 95)
+   - titleB: Rekomendasi Alternatif 1
+   - titleC: Rekomendasi Alternatif 2
    - description: 3-5 rich paragraphs formatted with timestamps, YouTube SEO keywords, sound mastering notes (-14 LUFS standard), and 5 targeted hashtags.
    - tags: 12-16 high-volume, low-competition tags as an array of strings.
 
 2. THUMBNAIL TEXT:
    - variant1, variant2, variant3: Ultra short, punchy 2-4 word text overlays designed for mobile CTR > 20% (e.g., "DEEP FOCUS ⚡", "RAIN IN TOKYO 🌧️").
 
-3. INTRO HOOK:
-   - 0 to 10 seconds viewer retention script for on-screen kinetic text or soft voiceover intro to lock in viewers before the music starts.
+3. INTRO HOOK (0-10 DETIK):
+   - 3-tier structure ready to paste into video editing software:
+     1) Hook: kalimat pembuka yang langsung membuat audiens merasa relate.
+     2) Sub-judul: penjelasan singkat isi video + manfaatnya.
+     3) Call to Action: ajakan menonton sampai selesai untuk menyelesaikan masalah audiens.
 
-4. THUMBNAIL PROMPTS (BLOK 04 - FOR GOOGLE FLOW AI & MIDJOURNEY, RATIO 16:9, CTR > 10%):
-   Generate 4 production-ready English image prompts (cinematic, split, minimal, lifestyle) combining 4 MANDATORY COMPOSITION LAYERS:
-     1. Background: Atmosphere/location matching mood, dominant tones, dramatic single-directional lighting (window/spotlight).
-     2. Main Subject: Largest focal object/subject (expressive human face with eyes closed in serene peace, iconic instrument, or category artifact).
-     3. Foreground: Near-camera depth elements (swirling steam, dust particles, rain droplets, blurred leaves) with shallow f/1.8 depth.
-     4. Text Overlay: 3–5 words in bold heavyweight sans-serif, high complementary contrast with stroke/shadow to pop on small mobile screens, positioned safely away from bottom-right video duration badge.
-   VISUAL RULES:
-     - Powerful complementary color contrast (e.g., deep navy blue vs glowing amber/gold) to jump out in the YouTube feed.
-     - One sharp focal point, background/foreground blur for 3D depth.
-     - Conclude each prompt with 1 concise sentence explaining the click trigger (curiosity/benefit/color contrast).
+4. THUMBNAIL PROMPTS (BLOK 04 - AI IMAGE GENERATOR READY, TARGET CTR >20%):
+   Generate 4 production-ready English image prompts (cinematic, split, minimal, lifestyle) in 16:9 ratio.
+   
+   WAJIB 4 LAPISAN KOMPOSISI PER PROMPT:
+     1. Background: Setting/atmosphere matching mood, dominant complementary color, dramatic single-directional lighting (window beam / stage spotlight / warm lantern cone).
+     2. Gambar Utama (Main Subject): Largest sharp focal subject (expressive human face with eyes closed in serene peace, iconic instrument, or category artifact).
+     3. Foreground: Near-camera depth elements (swirling steam, floating dust particles, rain droplets, blurred leaves) with f/1.8 shallow depth of field.
+     4. Teks Overlay: 3–5 words in bold heavyweight sans-serif typography, high complementary contrast with stroke/shadow to pop on small mobile smartphone screens, positioned safely away from bottom-right video duration badge (top-left or upper-third).
 
-5. AI IMAGE PROMPTS (BLOK 05 - REVISED):
-   - Array of exactly 3 DISTINCT, STANDALONE single-scene base image prompts.
-   - CRITICAL REQUIREMENT: Each of the 3 prompts MUST be an independent, self-contained single scene (NOT sequential scenes 1, 2, 3 or chronological storyboard). The creator will pick ONE single best image to be animated in Block 06.
+   ATURAN VISUAL:
+     - Powerful complementary color contrast (e.g., Midnight Navy Blue vs Radiant Amber Gold, Obsidian Black vs Blazing White-Cyan) to jump out immediately in YouTube feeds.
+     - Single sharp focal subject with cinematic background & foreground depth blur.
+     - Dramatic single-directional lighting.
+     - Authentic emotional expression if a human figure is featured (genuine calm, deep focus, serene relief).
+     - Consistent category-specific color palette and aesthetic style.
 
-6. AI VIDEO PROMPT (BLOK 06):
-   - Prompt for Google Flow AI / Veo / Runway image-to-video seamless loop.
-   - CRITICAL REQUIREMENT: Camera is strictly LOCKED-OFF and static on tripod (zero camera panning, tilting, or perspective shifts). Micro-movement is isolated to atmospheric particles, gentle steam, flickering ambient light, or raindrop trails, engineered for infinite seamless looping.
+   OUTPUT:
+     - 4 variants: Cinematic, Split, Minimal Typography, Emotional Lifestyle.
+     - All in English, ready to render for AI image generators (Midjourney, Flux, Imagen, Google Flow AI).
+     - 16:9 aspect ratio (--ar 16:9).
+     - Seamlessly combine the 4 composition layers + text overlay.
+     - MUST CONCLUDE EACH VARIANT WITH 1 CONCISE SENTENCE EXPLAINING THE CLICK TRIGGER REASON (pemicu rasa penasaran, kontras warna, atau janji benefit instan untuk CTR berpotensi >20%).
+
+5. PROMPT GAMBAR AI - GOOGLE FLOW BASE IMAGE (BLOK 05):
+   - HANYA 1 GAMBAR TERBAIK (Single standalone base image prompt, detailed, in English).
+   - Targeted specifically at US / Tier-1 instrumental music audience.
+   - MUST contain 4 MANDATORY DETAILED LAYERS:
+     1. Background: specific location, time of day, weather, color palette harmonizing with the mood.
+     2. Main subject: category's iconic instrument / primary object, razor-sharp focus (f/1.8).
+     3. Foreground: depth elements (delicate steam/smoke, water droplets on window glass, floating light motes, foliage).
+     4. Lighting & color grading: rich cinematic contrast, dramatic single-directional lighting (chiaroscuro / warm tungsten / golden hour).
+   - MUST CLOSE WITH THE EXACT PHRASE: "photorealistic / cinematic detail, aspect ratio 16:9".
+
+6. PROMPT VIDEO AI - GOOGLE FLOW IMAGE-TO-VIDEO LOOP (BLOK 06):
+   - Derivative directly from the Base Image prompt in Blok 05.
+   - Kamera statis wajib: "Locked-off tripod camera (strictly no panning, no tilting, no zoom, no camera movement, no cuts)."
+   - Minimal 2 gerak halus siklis relevan scene (e.g., steam curling and dissolving from coffee, raindrops or dew sliding down glass, dust motes drifting across light beams, sheer curtains swaying, subtle light flicker/refraction).
+   - Looping sempurna 10 detik tanpa jump-cut: "Continuous seamless 10-second loop cycle with identical start and end frames, zero jump-cuts, zero morphing artifacts."
+   - Written with extreme specificity in English.
 
 7. TECHNICAL NOTES:
    - Pre-upload checklist covering integrated LUFS (-14 LUFS), recommended timeline extension (10s base loop extended to 1h - 8h), and CTR tips.
@@ -137,8 +163,6 @@ You MUST reply ONLY with valid, raw JSON matching this TypeScript schema:
     "lifestyle": "string"
   },
   "imagePrompts": [
-    "string",
-    "string",
     "string"
   ],
   "videoPrompt": "string",
@@ -148,9 +172,8 @@ Do not wrap in markdown codeblocks if possible, or wrap cleanly in \`\`\`json.
 `;
 
 const PRIMARY_TEXT_MODELS = [
-  'gemini-3.6-flash',
   'gemini-3.8-flash',
-  'gemini-flash-latest'
+  'gemini-3.7-flash'
 ];
 
 /**
@@ -268,10 +291,27 @@ Strictly output JSON following the system prompt rules.
           categoryName: input.categoryName,
           genre: input.subGenre,
           moods: input.moods,
+          preferredStyle: input.preferredThumbnailStyle,
           duration: input.duration,
           useCase: input.useCase,
           optionalKeyword: kw
         });
+
+        const flowFallback = generateGoogleFlowPrompts({
+          categoryName: input.categoryName,
+          genre: input.subGenre,
+          moods: input.moods,
+          optionalKeyword: kw,
+          variationIndex: 0
+        });
+
+        const bestImagePrompt = (Array.isArray(parsed.imagePrompts) && parsed.imagePrompts.length > 0 && typeof parsed.imagePrompts[0] === 'string' && parsed.imagePrompts[0].trim().length > 10)
+          ? parsed.imagePrompts[0].trim()
+          : flowFallback.imagePrompt;
+
+        const resolvedVideoPrompt = (typeof parsed.videoPrompt === 'string' && parsed.videoPrompt.trim().length > 10)
+          ? parsed.videoPrompt.trim()
+          : flowFallback.videoPrompt;
 
         const pkg: ContentPackage = {
           id: newId,
@@ -280,6 +320,7 @@ Strictly output JSON following the system prompt rules.
           categoryName: input.categoryName,
           subGenre: input.subGenre,
           moods: input.moods,
+          preferredThumbnailStyle: input.preferredThumbnailStyle || 'all',
           duration: input.duration,
           useCase: input.useCase,
           optionalKeyword: kw,
@@ -307,14 +348,9 @@ Strictly output JSON following the system prompt rules.
             lifestyle: parsed.thumbnailPrompts?.lifestyle || engineeredThumbs.prompts.lifestyle
           },
           thumbnailDetails: engineeredThumbs.details,
-          imagePrompts: Array.isArray(parsed.imagePrompts) && parsed.imagePrompts.length === 3
-            ? parsed.imagePrompts
-            : [
-                `Alternatif 1 (Master Composition): Standalone single scene of ${kw}, warm lighting, 8k resolution, static composition for video looping.`,
-                `Alternatif 2 (Atmospheric Detail): Standalone single scene reflecting ${input.moods.join(' and ')} mood, soft focus background bokeh, tranquil aesthetic framing.`,
-                `Alternatif 3 (Minimalist Angle): Standalone single wide perspective complementary to ${input.categoryName}, spacious negative space for locked-off looping.`
-              ],
-          videoPrompt: parsed.videoPrompt || `Image-to-video seamless loop: Locked-off camera on tripod. Subtle gentle micro-motion in atmospheric lighting and particle drift matching ${kw}. Zero camera panning, flawless 10s loop cycle.`,
+          imagePrompts: [bestImagePrompt],
+          videoPrompt: resolvedVideoPrompt,
+          googleFlowDetails: flowFallback,
           technicalNotes: parsed.technicalNotes || `• Target Loudness: -14 LUFS (Integrated)\n• Recommended Loop Duration: 10s base clip extended to 1 hour timeline\n• Aspect Ratio: 16:9 (3840x2160 or 1920x1080)`
         };
 
@@ -365,8 +401,9 @@ Follow these specific rules:
 - If "Teks Thumbnail": return JSON { "variant1": "...", "variant2": "...", "variant3": "..." }
 - If "Intro Hook Video": return JSON { "introHook": "..." }
 - If "Prompt Thumbnail": return JSON { "cinematic": "...", "split": "...", "minimal": "...", "lifestyle": "..." }
-- If "Prompt Gambar AI": return JSON { "imagePrompts": ["3 standalone single-scene prompts..."] }
-- If "Prompt Video AI": return JSON { "videoPrompt": "..." }
+- If "Prompt Gambar AI": return JSON { "imagePrompts": ["1 best standalone single-scene image prompt in English with 4 layers (Background, Main subject, Foreground, Lighting) closing with 'photorealistic / cinematic detail, aspect ratio 16:9'"] }
+- If "Prompt Video AI": return JSON { "videoPrompt": "Locked-off tripod camera (strictly no panning, no zoom, no camera movement, no cuts). Minimal 2 subtle cyclical motions. Seamless 10-second loop with zero jump-cuts." }
+- If "Google Flow Prompts": return JSON { "imagePrompts": ["1 best image prompt..."], "videoPrompt": "Locked-off tripod camera..." }
 - If "Catatan Teknis": return JSON { "technicalNotes": "..." }
 
 Return strictly JSON.
@@ -450,23 +487,26 @@ Return strictly JSON.
       };
     }
     case 'Prompt Gambar AI':
-      return {
-        updatedData: {
-          imagePrompts: [
-            `Alternatif 1 (Master Composition): Standalone single scene of ${kw}, peaceful ambient lighting, 8k resolution, photorealistic studio photography, clean composition optimized as base image for video looping.`,
-            `Alternatif 2 (Atmospheric Environment): Standalone single scene reflecting ${pkg.moods.join(' and ')} mood, soft focus background bokeh, tranquil aesthetic framing crafted for subtle image-to-video motion.`,
-            `Alternatif 3 (Cinematic Perspective): Standalone single wide perspective complementing ${pkg.categoryName}, tranquil and balanced negative space, perfect for locked-off camera image-to-video loop animation.`
-          ]
-        },
-        model: 'TuneForge Algorithmic Engine'
-      };
     case 'Prompt Video AI':
+    case 'Google Flow Prompts': {
+      const currentVar = pkg.googleFlowDetails?.variationIndex ?? 0;
+      const nextVar = (currentVar + 1) % 3;
+      const flow = generateGoogleFlowPrompts({
+        categoryName: pkg.categoryName,
+        genre: pkg.subGenre,
+        moods: pkg.moods,
+        optionalKeyword: kw,
+        variationIndex: nextVar
+      });
       return {
         updatedData: {
-          videoPrompt: `Image-to-video seamless loop: Locked-off camera on tripod. Subtle gentle micro-motion in atmospheric lighting and particle drift matching ${kw}. Absolutely zero camera panning or perspective warping. Seamless 10-second loop.`
+          imagePrompts: [flow.imagePrompt],
+          videoPrompt: flow.videoPrompt,
+          googleFlowDetails: flow
         },
-        model: 'TuneForge Algorithmic Engine'
+        model: `TuneForge Google Flow Engine (Komposisi Baru #${nextVar + 1})`
       };
+    }
     default:
       return {
         updatedData: {
@@ -494,9 +534,18 @@ function generateAlgorithmicFallback(input: ForgeInput, newId: string, startTime
     categoryName: input.categoryName,
     genre: input.subGenre,
     moods: input.moods,
+    preferredStyle: input.preferredThumbnailStyle,
     duration: input.duration,
     useCase: input.useCase,
     optionalKeyword: cleanKw
+  });
+
+  const flowEngine = generateGoogleFlowPrompts({
+    categoryName: input.categoryName,
+    genre: input.subGenre,
+    moods: input.moods,
+    optionalKeyword: cleanKw,
+    variationIndex: 0
   });
 
   return {
@@ -506,6 +555,7 @@ function generateAlgorithmicFallback(input: ForgeInput, newId: string, startTime
     categoryName: input.categoryName,
     subGenre: input.subGenre,
     moods: input.moods,
+    preferredThumbnailStyle: input.preferredThumbnailStyle || 'all',
     duration: input.duration,
     useCase: input.useCase,
     optionalKeyword: cleanKw,
@@ -538,12 +588,9 @@ function generateAlgorithmicFallback(input: ForgeInput, newId: string, startTime
     introHook: `Welcome to this 1-hour session of ${input.subGenre}. Keep your focus uninterrupted, let the rhythm flow, and enjoy your deepest work yet.`,
     thumbnailPrompts: thumbEngine.prompts,
     thumbnailDetails: thumbEngine.details,
-    imagePrompts: [
-      `Alternatif 1 (Master Composition): Standalone single scene of ${cleanKw}, peaceful ambient lighting, 8k resolution, photorealistic studio photography, clean composition optimized as base image for video looping.`,
-      `Alternatif 2 (Atmospheric Environment): Standalone single scene reflecting ${input.moods.join(' and ')} mood, soft focus background bokeh, tranquil aesthetic framing crafted for subtle image-to-video motion.`,
-      `Alternatif 3 (Cinematic Perspective): Standalone single wide perspective complementing ${input.categoryName}, tranquil and balanced negative space, perfect for locked-off camera image-to-video loop animation.`
-    ],
-    videoPrompt: `Image-to-video prompt: Perfectly static camera locked-off on tripod. Subtle gentle motion in ambient light and atmospheric particles matching ${cleanKw}. Absolutely zero camera panning or perspective warping. Seamless 10-second loop.`,
+    imagePrompts: [flowEngine.imagePrompt],
+    videoPrompt: flowEngine.videoPrompt,
+    googleFlowDetails: flowEngine,
     technicalNotes: `• Target Loudness: -14 LUFS (Integrated)\n• Recommended Loop Duration: 10s base clip extended to 1 hour timeline\n• Aspect Ratio: 16:9 (3840x2160 or 1920x1080)\n• High CTR Tip: Pair Thumbnail Text Variant 1 with the Cinematic or Minimal Typography thumbnail prompt.`
   };
 }

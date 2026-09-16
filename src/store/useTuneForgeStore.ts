@@ -3,6 +3,7 @@ import { CATEGORIES_DATA, INITIAL_HISTORY_PACKAGES, SAMPLE_LOFI_PACKAGE } from '
 import { Category, ContentPackage, User, PromptTemplate, AuditLog } from '../types';
 import { generateRefinedTitleVariants } from '../data/titleFormulaEngine';
 import { generateEngineeredThumbnailPrompts } from '../data/thumbnailPromptEngine';
+import { generateGoogleFlowPrompts } from '../data/googleFlowEngine';
 
 interface SystemStats {
   totalCategories: number;
@@ -56,6 +57,7 @@ interface TuneForgeState {
   selectedCategoryId: string;
   selectedSubGenre: string;
   selectedMoods: string[];
+  selectedThumbnailStyle: 'all' | 'cinematic' | 'split' | 'minimal' | 'lifestyle';
   duration: string; // opsional: "1 Hour", "3 Hours", etc.
   useCase: string; // opsional: "Study & Sleep", "Deep Focus & Work", etc.
   optionalKeyword: string;
@@ -65,6 +67,7 @@ interface TuneForgeState {
   setSelectedCategory: (categoryId: string) => void;
   setSelectedSubGenre: (subGenre: string) => void;
   toggleMood: (mood: string) => void;
+  setSelectedThumbnailStyle: (style: 'all' | 'cinematic' | 'split' | 'minimal' | 'lifestyle') => void;
   setDuration: (duration: string) => void;
   setUseCase: (useCase: string) => void;
   setOptionalKeyword: (keyword: string) => void;
@@ -280,6 +283,7 @@ export const useTuneForgeStore = create<TuneForgeState>((set, get) => ({
   selectedCategoryId: 'cat-01',
   selectedSubGenre: 'Lo-fi Hip-Hop Study',
   selectedMoods: ['Cozy', 'Focus'],
+  selectedThumbnailStyle: 'all',
   duration: '1 Hour',
   useCase: 'Study & Work',
   optionalKeyword: '',
@@ -311,6 +315,7 @@ export const useTuneForgeStore = create<TuneForgeState>((set, get) => ({
     }
   },
 
+  setSelectedThumbnailStyle: (style) => set({ selectedThumbnailStyle: style }),
   setDuration: (duration) => set({ duration }),
   setUseCase: (useCase) => set({ useCase }),
   setOptionalKeyword: (keyword) => set({ optionalKeyword: keyword.slice(0, 120) }),
@@ -321,6 +326,7 @@ export const useTuneForgeStore = create<TuneForgeState>((set, get) => ({
       selectedCategoryId: firstCat.id,
       selectedSubGenre: firstCat.subGenres[0] || '',
       selectedMoods: firstCat.moods.slice(0, 2),
+      selectedThumbnailStyle: 'all',
       duration: '1 Hour',
       useCase: 'Study & Work',
       optionalKeyword: '',
@@ -395,6 +401,7 @@ export const useTuneForgeStore = create<TuneForgeState>((set, get) => ({
           categoryName: cat.name,
           subGenre: state.selectedSubGenre,
           moods: state.selectedMoods,
+          preferredThumbnailStyle: state.selectedThumbnailStyle,
           duration: state.duration,
           useCase: state.useCase,
           optionalKeyword: cleanKw,
@@ -435,9 +442,18 @@ export const useTuneForgeStore = create<TuneForgeState>((set, get) => ({
       categoryName: cat.name,
       genre: state.selectedSubGenre,
       moods: state.selectedMoods,
+      preferredStyle: state.selectedThumbnailStyle,
       duration: state.duration,
       useCase: state.useCase,
       optionalKeyword: cleanKw
+    });
+
+    const fallbackFlow = generateGoogleFlowPrompts({
+      categoryName: cat.name,
+      genre: state.selectedSubGenre,
+      moods: state.selectedMoods,
+      optionalKeyword: cleanKw,
+      variationIndex: 0
     });
 
     const newPkg: ContentPackage = {
@@ -447,12 +463,13 @@ export const useTuneForgeStore = create<TuneForgeState>((set, get) => ({
       categoryName: cat.name,
       subGenre: state.selectedSubGenre,
       moods: state.selectedMoods,
+      preferredThumbnailStyle: state.selectedThumbnailStyle,
       duration: state.duration,
       useCase: state.useCase,
       optionalKeyword: cleanKw,
       createdAt: new Date().toISOString(),
       generationMs: 3200,
-      model: 'TuneForge Formula Engine (Client)',
+      model: 'TuneForge Google Flow Engine (Client)',
       metadata: {
         titleA: fallbackVariants[0].title,
         titleB: fallbackVariants[1].title,
@@ -479,12 +496,9 @@ export const useTuneForgeStore = create<TuneForgeState>((set, get) => ({
       introHook: `Welcome to this 1-hour session of ${state.selectedSubGenre}. Keep your focus uninterrupted, let the rhythm flow, and enjoy your deepest work yet.`,
       thumbnailPrompts: fallbackThumbs.prompts,
       thumbnailDetails: fallbackThumbs.details,
-      imagePrompts: [
-        `Alternatif 1 (Master Composition): Standalone single scene of ${cleanKw}, peaceful ambient lighting, 8k resolution, photorealistic studio photography, clean composition optimized as base image for video looping.`,
-        `Alternatif 2 (Atmospheric Environment): Standalone single scene reflecting ${state.selectedMoods.join(' and ')} mood, soft focus background bokeh, tranquil aesthetic framing crafted for subtle image-to-video motion.`,
-        `Alternatif 3 (Cinematic Perspective): Standalone single wide perspective complementing ${cat.name}, tranquil and balanced negative space, perfect for locked-off camera image-to-video loop animation.`
-      ],
-      videoPrompt: `Image-to-video prompt: Perfectly static camera locked-off on tripod. Subtle gentle motion in ambient light and atmospheric particles matching ${cleanKw}. Absolutely zero camera panning or perspective warping. Seamless 10-second loop.`,
+      imagePrompts: [fallbackFlow.imagePrompt],
+      videoPrompt: fallbackFlow.videoPrompt,
+      googleFlowDetails: fallbackFlow,
       technicalNotes: `• Target Loudness: -14 LUFS (Integrated)\n• Recommended Loop Duration: 10s base clip extended to 1 hour timeline\n• Aspect Ratio: 16:9 (3840x2160 or 1920x1080)\n• High CTR Tip: Pair Thumbnail Text Variant 1 with the Cinematic or Minimal Typography thumbnail prompt.`
     };
 
@@ -530,10 +544,10 @@ export const useTuneForgeStore = create<TuneForgeState>((set, get) => ({
           if (updatedData.thumbnailDetails) {
             modifiedPackage.thumbnailDetails = updatedData.thumbnailDetails;
           }
-        } else if (blockName === 'Prompt Gambar AI' && updatedData.imagePrompts) {
-          modifiedPackage.imagePrompts = updatedData.imagePrompts;
-        } else if (blockName === 'Prompt Video AI' && updatedData.videoPrompt) {
-          modifiedPackage.videoPrompt = updatedData.videoPrompt;
+        } else if ((blockName === 'Prompt Gambar AI' || blockName === 'Prompt Video AI' || blockName === 'Google Flow Prompts')) {
+          if (updatedData.imagePrompts) modifiedPackage.imagePrompts = updatedData.imagePrompts;
+          if (updatedData.videoPrompt) modifiedPackage.videoPrompt = updatedData.videoPrompt;
+          if (updatedData.googleFlowDetails) modifiedPackage.googleFlowDetails = updatedData.googleFlowDetails;
         } else if (blockName === 'Catatan Teknis' && updatedData.technicalNotes) {
           modifiedPackage.technicalNotes = updatedData.technicalNotes;
         }
@@ -548,6 +562,35 @@ export const useTuneForgeStore = create<TuneForgeState>((set, get) => ({
     } catch (err) {
       console.warn('API call failed for regenerate block:', err);
     }
+
+    // Client-side fallback regeneration
+    if (blockName === 'Prompt Gambar AI' || blockName === 'Prompt Video AI' || blockName === 'Google Flow Prompts') {
+      const currentVar = currentPkg.googleFlowDetails?.variationIndex ?? 0;
+      const nextVar = (currentVar + 1) % 3;
+      const regeneratedFlow = generateGoogleFlowPrompts({
+        categoryName: currentPkg.categoryName,
+        genre: currentPkg.subGenre,
+        moods: currentPkg.moods,
+        optionalKeyword: currentPkg.optionalKeyword || 'Session',
+        variationIndex: nextVar
+      });
+
+      const modifiedPackage: ContentPackage = {
+        ...currentPkg,
+        imagePrompts: [regeneratedFlow.imagePrompt],
+        videoPrompt: regeneratedFlow.videoPrompt,
+        googleFlowDetails: regeneratedFlow,
+        model: `TuneForge Google Flow Engine (Komposisi Baru #${nextVar + 1})`
+      };
+
+      set((s) => ({
+        currentPackage: modifiedPackage,
+        packages: s.packages.map((p) => (p.id === modifiedPackage.id ? modifiedPackage : p))
+      }));
+      state.showToast(`Prompt Google Flow baru (#${nextVar + 1}) berhasil di-generate!`);
+      return true;
+    }
+
     return false;
   },
 

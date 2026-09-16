@@ -15,6 +15,7 @@ import {
   Sparkles
 } from 'lucide-react';
 import { useTuneForgeStore } from '../../store/useTuneForgeStore';
+import { PWAInstallButton } from '../pwa/PWAInstallButton';
 
 interface DashboardSidebarProps {
   onCloseMobile?: () => void;
@@ -184,6 +185,11 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ onCloseMobil
             {currentUser.role === 'admin' ? 'Mode Admin' : 'Mode User'}
           </span>
         </button>
+
+        {/* PWA Install Button in Sidebar */}
+        <div className="pt-0.5">
+          <PWAInstallButton compact={true} fullWidth={true} />
+        </div>
 
         <button
           onClick={() => handleNav('/generate')}

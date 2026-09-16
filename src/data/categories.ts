@@ -126,15 +126,37 @@ Produced & Curated for high-retention focus sessions. No harsh transitions, bala
     lifestyle: 'Authentic cozy lifestyle photography, 16:9 ratio. Overhead angle of an aesthetic work-from-home desk setup during a stormy rainy evening. Soft ambient glow from multiple warm light sources, steaming mug of tea, mechanical keyboard with subtle backlight, acoustic guitar leaning against wooden bookshelf in soft background blur. Inviting, melancholic, intimate, relatable, hyper-realistic film grain.'
   },
 
-  // 5. Image Prompts (3 Standalone Alternative Base Scenes for Video Loop)
+  // 5. Image Prompts (Hanya 1 Gambar Terbaik untuk Google Flow Base Scene)
   imagePrompts: [
-    'Alternatif 1 (Desk & Rainy Window): Single standalone scene of an aesthetic loft apartment in Shibuya during midnight rain. Centered wooden work desk with illuminated warm desk lamp casting golden light on notes, headphones, and steaming coffee. Wide rain-streaked window overlooking Tokyo neon skyline. Photorealistic, warm tones, 8k resolution, Unreal Engine 5 render style. Perfect single-image base for ambient video loop.',
-    'Alternatif 2 (Cozy Coffee Nook & Neon Bokeh): Single standalone scene featuring a cozy wooden table beside a wet window pane looking out toward glowing Tokyo city lights and colorful neon signs in soft atmospheric bokeh. A warm cup of coffee and a potted Monstera plant on the sill. Introspective, calm, cinematic 35mm film still, ideal standalone frame for looping raindrops and steam animation.',
-    'Alternatif 3 (Studio Armchair & Vinyl Sanctuary): Single standalone interior scene of a quiet music corner with oak bookshelves, vinyl records stack, vintage analog speaker with glowing warm VU meters, and an orange cat sleeping on a soft wool blanket. Ambient golden hour glow, tranquil sanctuary aesthetic, hyper-detailed composition crafted for static camera looping.'
+    'Background: High-rise minimalist apartment in Shibuya Tokyo at 2:00 AM, continuous gentle rainfall streaming down expansive floor-to-ceiling glass window, blurred neon signage in muted cyan and deep indigo reflecting across wet exterior glass. Main subject: Centered dark mahogany study desk with illuminated vintage brass gooseneck lamp casting warm 2700K golden illumination on studio headphones, open cream-colored notebook, and mechanical keyboard in razor-sharp focus (f/1.8). Foreground: Delicate translucent wisps of aromatic steam curling upward from a warm ceramic coffee mug, with macro raindrops slowly beading on the interior window sill. Lighting & color grading: Directional warm tungsten chiaroscuro cutting across atmospheric twilight blue shadows, rich color separation, deep blacks. photorealistic / cinematic detail, aspect ratio 16:9'
   ],
 
-  // 6. Video Prompt (Image-to-Video Loop)
-  videoPrompt: 'Image-to-video seamless loop animation. Camera is completely locked-off and static, no panning, no camera shake. Subtle isolated motion only: continuous rain droplets rolling down the window glass at steady pace, faint wisps of steam curling upward from the coffee cup, and soft neon light pulses in the distant cityscape bokeh. Perfectly seamless 10-second looping cycle, smooth interpolation, stable physics, no distortion, zero artifacting.',
+  // 6. Video Prompt (Turunan dari Prompt Gambar untuk Google Flow Image-to-Video)
+  videoPrompt: 'Locked-off static camera strictly mounted on a stable tripod, no panning, no camera tilt, no zooming, no camera shake, zero cuts. Delicate cyclical micro-motion strictly isolated to translucent steam rising from the ceramic coffee mug in continuous gentle spirals, rain droplets slowly tracing downward paths along the exterior window glass, and tiny golden dust motes floating lazily through the warm desk lamp beam. Perfectly seamless 10-second loop cycle with identical first and last frame physics, zero jump-cuts, flawless continuous motion for multi-hour playback.',
+
+  // Google Flow Details (4 Lapisan Komposisi & Spesifikasi Loop)
+  googleFlowDetails: {
+    compositionTitle: 'Nocturnal Study Desk & Rainy Shibuya Window',
+    variationIndex: 0,
+    layers: {
+      background: 'High-rise minimalist apartment in Shibuya Tokyo at 2:00 AM, continuous gentle rainfall streaming down expansive floor-to-ceiling glass window, blurred neon signage in muted cyan and deep indigo reflecting across wet exterior glass.',
+      mainSubject: 'Centered dark mahogany study desk with illuminated vintage brass gooseneck lamp casting warm 2700K golden illumination on studio headphones, open cream-colored notebook, and mechanical keyboard in razor-sharp focus (f/1.8).',
+      foreground: 'Delicate translucent wisps of aromatic steam curling upward from a warm ceramic coffee mug, with macro raindrops slowly beading on the interior window sill.',
+      lightingAndColor: 'Directional warm tungsten chiaroscuro cutting across atmospheric twilight blue shadows, rich color separation, deep blacks.'
+    },
+    imagePrompt: 'Background: High-rise minimalist apartment in Shibuya Tokyo at 2:00 AM, continuous gentle rainfall streaming down expansive floor-to-ceiling glass window, blurred neon signage in muted cyan and deep indigo reflecting across wet exterior glass. Main subject: Centered dark mahogany study desk with illuminated vintage brass gooseneck lamp casting warm 2700K golden illumination on studio headphones, open cream-colored notebook, and mechanical keyboard in razor-sharp focus (f/1.8). Foreground: Delicate translucent wisps of aromatic steam curling upward from a warm ceramic coffee mug, with macro raindrops slowly beading on the interior window sill. Lighting & color grading: Directional warm tungsten chiaroscuro cutting across atmospheric twilight blue shadows, rich color separation, deep blacks. photorealistic / cinematic detail, aspect ratio 16:9',
+    videoRules: {
+      cameraRule: 'Completely static locked-off tripod camera. Strictly zero pan, tilt, zoom, or camera shake.',
+      cyclicalMotions: [
+        'Translucent steam curling upward from ceramic coffee mug in endless gentle loop',
+        'Raindrops steadily tracing downward paths along exterior window glass',
+        'Faint golden dust motes floating through warm desk lamp light beam'
+      ],
+      loopDuration: '10 seconds seamless loop',
+      noJumpCutNote: 'Perfect loop physics with identical start and end frames, zero jump-cut or frame popping.'
+    },
+    videoPrompt: 'Locked-off static camera strictly mounted on a stable tripod, no panning, no camera tilt, no zooming, no camera shake, zero cuts. Delicate cyclical micro-motion strictly isolated to translucent steam rising from the ceramic coffee mug in continuous gentle spirals, rain droplets slowly tracing downward paths along the exterior window glass, and tiny golden dust motes floating lazily through the warm desk lamp beam. Perfectly seamless 10-second loop cycle with identical first and last frame physics, zero jump-cuts, flawless continuous motion for multi-hour playback.'
+  },
 
   // 7. Technical Notes
   technicalNotes: `• Resolution: 16:9 (3840x2160 4K or 1920x1080 Full HD)
@@ -404,11 +426,9 @@ export const INITIAL_HISTORY_PACKAGES: ContentPackage[] = [
       lifestyle: 'Cozy bedroom aesthetic, dim night light, sleeping person wrapped in warm duvet, rain trickling down window glass, cinematic 8k film grain.'
     },
     imagePrompts: [
-      'Alternatif 1 (Cozy Cabin): Standalone single scene of a dark rustic cabin in the rainy pine woods at midnight, warm amber lamp inside window against deep midnight blue forest.',
-      'Alternatif 2 (Window Rain View): Standalone single scene of gentle rain droplets on window pane overlooking misty mountain valley at dusk, peaceful locked camera view.',
-      'Alternatif 3 (Minimalist Nightstand): Standalone single scene of a cozy minimalist bedroom with soft indirect amber nightstand illumination, plush duvet, and deep velvet curtains.'
+      'Background: Dark rustic wooden cabin nestled inside a nocturnal misty pine forest during a peaceful thunderstorm, blue moonlight filtering through towering trees. Main subject: Centered rain-streaked attic window frame glowing with faint 2200K amber nightstand lamp illuminating soft linen beddings in sharp focus. Foreground: Macro translucent raindrops beading and sliding down window pane with faint vapor condensation at the edges. Lighting & color grading: Deep nocturnal navy shadows balanced against delicate golden lamp glow, low-key cinematic contrast. photorealistic / cinematic detail, aspect ratio 16:9'
     ],
-    videoPrompt: 'Completely static locked camera loop. Rain streaks slowly sliding down the dark window glass. Faint shimmer of water on pine leaves. Seamless 15-second loop without jumps.',
+    videoPrompt: 'Locked-off static camera mounted on a stable tripod, strictly no pan, no tilt, no zoom, zero camera movement. Continuous subtle micro-motion: translucent raindrops rolling rhythmically down the window glass, gentle swaying of distant pine needle silhouettes against dark night sky, and faint soft pulsing of ambient warm room lamp reflection. Seamless 10-second loop with identical start and end frames, zero jump-cuts, flawless repetition for 8-hour sleep video.',
     technicalNotes: '• Audio: Continuous seamless 8-hour render, -16 LUFS, zero transients or drums.\n• Video: Black screen fade after 1 minute or subtle dim looping visual.'
   },
   {
@@ -442,11 +462,9 @@ export const INITIAL_HISTORY_PACKAGES: ContentPackage[] = [
       lifestyle: 'Creator at modern ultra-wide dual monitor desk composing music with glowing synth keyboards and sound waves visualizer.'
     },
     imagePrompts: [
-      'Alternatif 1 (Colossal Mountain Peaks): Standalone single scene of colossal mountain peaks piercing through sea of golden clouds at sunset, majestic contrast, locked camera frame.',
-      'Alternatif 2 (Space Observation Deck): Standalone single scene of deep space station observation deck looking at planet Saturn rings and drifting cosmic dust particles.',
-      'Alternatif 3 (Celestial Cathedral): Standalone single scene of an ancient cathedral library with celestial light beams streaming through stained glass onto dust motes.'
+      'Background: Vast cosmic void with a swirling interstellar nebulae glowing in radiant amber and deep sapphire, distant ringed planet looming on the horizon. Main subject: Solitary explorer in high-detail aerodynamic space suit standing on an obsidian celestial cliff edge, sharp focal contrast f/2.0. Foreground: Drifting crystalline stardust motes and faint atmospheric ion mist catching golden rim light. Lighting & color grading: Cinematic anamorphic rim lighting from adjacent dying star, rich blacks, hyper-saturated celestial tones. photorealistic / cinematic detail, aspect ratio 16:9'
     ],
-    videoPrompt: 'Static image to video. Slowly moving cosmic nebula dust particles and subtle twinkle in distant stars. Perfect 8-second seamless loop.',
+    videoPrompt: 'Completely static locked-off camera framing the cosmic horizon, strictly zero pan, no tilt, no zoom. Micro-motion strictly isolated to crystalline stardust motes drifting slowly through the cosmic light beam, subtle breathing movement of glowing nebulous filaments, and faint twinkling in distant star cluster. Perfect 10-second seamless loop cycle with identical start and end physics, zero jump-cuts, hypnotic visual stability.',
     technicalNotes: '• Mastering: -13 LUFS, wide stereo imaging.\n• Aspect Ratio: 16:9 4K.'
   }
 ];

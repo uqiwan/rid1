@@ -24,7 +24,7 @@ app.get('/api/health', (req: Request, res: Response) => {
     phase: 'Fase 2',
     timestamp: new Date().toISOString(),
     aiReady: hasGeminiKey,
-    model: hasGeminiKey ? 'gemini-3.6-flash (Resilient Multi-Model Engine)' : 'TuneForge Algorithmic Engine',
+    model: hasGeminiKey ? 'gemini-3.8-flash (Fallback: gemini-3.7-flash)' : 'TuneForge Algorithmic Engine',
     uptime: process.uptime()
   });
 });

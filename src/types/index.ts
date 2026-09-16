@@ -16,6 +16,7 @@ export interface YouTubeTitleVariant {
   score: number;
   reason: string;
   isPrimaryRecommendation?: boolean;
+  variantLabel?: 'Rekomendasi Utama' | 'Rekomendasi Alternatif 1' | 'Rekomendasi Alternatif 2' | string;
   breakdown: {
     seoKeyword: number;
     ctrPotential: number;
@@ -53,18 +54,25 @@ export interface ContentPackage {
     variant3: string;
   };
   introHook: string;
+  introHookDetails?: {
+    hook: string;
+    subtitle: string;
+    cta: string;
+  };
   thumbnailPrompts: {
     cinematic: string;
     split: string;
     minimal: string;
     lifestyle: string;
   };
+  preferredThumbnailStyle?: 'all' | 'cinematic' | 'split' | 'minimal' | 'lifestyle';
   thumbnailDetails?: Record<'cinematic' | 'split' | 'minimal' | 'lifestyle', {
     styleName: string;
     styleKey: 'cinematic' | 'split' | 'minimal' | 'lifestyle';
     aspectRatio: string;
     targetCTR: string;
     fullPrompt: string;
+    renderPrompt?: string;
     layers: {
       background: string;
       mainSubject: string;
@@ -77,8 +85,31 @@ export interface ContentPackage {
       focusDepth: string;
       lighting: string;
       emotion: string;
+      palette?: string;
     };
   }>;
+  googleFlowDetails?: {
+    compositionTitle?: string;
+    imagePrompt: string;
+    videoPrompt: string;
+    layers: {
+      background: string;
+      mainSubject: string;
+      foreground: string;
+      lightingAndGrading?: string;
+      lightingAndColor?: string;
+    };
+    cyclicMotions?: string[];
+    cameraRule?: string;
+    loopSpec?: string;
+    videoRules?: {
+      cameraRule: string;
+      cyclicalMotions: string[];
+      loopDuration: string;
+      noJumpCutNote: string;
+    };
+    variationIndex?: number;
+  };
   imagePrompts: string[];
   videoPrompt: string;
   technicalNotes: string;

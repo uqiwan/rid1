@@ -1,6 +1,7 @@
 import React from 'react';
 import { Sparkles, Compass, HelpCircle, Layers, LogIn, LayoutDashboard, Wand2 } from 'lucide-react';
 import { useTuneForgeStore } from '../../store/useTuneForgeStore';
+import { PWAInstallButton } from '../pwa/PWAInstallButton';
 
 export const Header: React.FC = () => {
   const { currentRoute, navigate, isLoggedIn } = useTuneForgeStore();
@@ -60,7 +61,9 @@ export const Header: React.FC = () => {
         </nav>
 
         {/* Right CTA */}
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2 sm:gap-2.5">
+          <PWAInstallButton />
+
           {isLoggedIn ? (
             <>
               <button
