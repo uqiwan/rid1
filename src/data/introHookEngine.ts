@@ -15,16 +15,42 @@ export interface IntroHookTiers {
  * 3) Call to Action — Ajakan menonton sampai selesai untuk menyelesaikan masalah audiens
  */
 export function getIntroHookTiers(pkg: ContentPackage): IntroHookTiers {
-  // If explicitly present in package
-  if (pkg.introHookDetails && pkg.introHookDetails.hook) {
-    const { hook, subtitle, cta } = pkg.introHookDetails;
+  if (!pkg) {
+    return {
+      hook: '',
+      subtitle: '',
+      cta: '',
+      fullFormattedText: ''
+    };
+  }
+
+  // 1. If explicitly present in package introHookDetails
+  if (pkg.introHookDetails && typeof pkg.introHookDetails === 'object' && pkg.introHookDetails.hook) {
+    const hook = String(pkg.introHookDetails.hook || '');
+    const subtitle = String(pkg.introHookDetails.subtitle || '');
+    const cta = String(pkg.introHookDetails.cta || '');
     const fullFormattedText = `1) Hook:\n${hook}\n\n2) Subtitle:\n${subtitle}\n\n3) Call to Action:\n${cta}`;
     return { hook, subtitle, cta, fullFormattedText };
   }
 
-  // Parse if raw introHook already contains 3 tiers or numbered lines
-  const raw = pkg.introHook || '';
-  if (raw.includes('1)') || raw.includes('Hook:') || raw.includes('1.')) {
+  // 2. If pkg.introHook is an object with hook/subtitle/cta properties
+  if (pkg.introHook && typeof pkg.introHook === 'object') {
+    const obj = pkg.introHook as Record<string, any>;
+    const hook = String(obj.hook || obj['1'] || obj.intro || obj.title || '');
+    const subtitle = String(obj.subtitle || obj['2'] || obj.sub || obj.description || '');
+    const cta = String(obj.cta || obj['3'] || obj.callToAction || '');
+    if (hook || subtitle || cta) {
+      const fullFormattedText = `1) Hook:\n${hook}\n\n2) Subtitle:\n${subtitle}\n\n3) Call to Action:\n${cta}`;
+      return { hook, subtitle, cta, fullFormattedText };
+    }
+  }
+
+  // 3. Ensure raw is guaranteed to be a string before parsing
+  const raw = typeof pkg.introHook === 'string'
+    ? pkg.introHook
+    : (pkg.introHook ? String(pkg.introHook) : '');
+
+  if (typeof raw === 'string' && (raw.includes('1)') || raw.includes('Hook:') || raw.includes('1.'))) {
     const lines = raw.split('\n').map(l => l.trim()).filter(Boolean);
     let hook = '';
     let subtitle = '';

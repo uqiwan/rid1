@@ -1,36 +1,341 @@
 @import "tailwindcss";
 
-@theme {
-  --font-display: "Inter Tight", -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-mono: "JetBrains Mono", monospace;
+:root {
+  /* === BACKGROUND === */
+  --bg-base        : #FFFFFF;       /* Latar halaman utama */
+  --bg-surface     : #F5F5F7;       /* Card / panel / blok */
+  --bg-inset       : #F2F2F7;       /* Input, textarea, area kode */
+  --bg-overlay     : rgba(255, 255, 255, 0.82); /* Frosted glass header/sidebar */
 
-  --color-charcoal: #191c21;
-  --color-charcoal-deep: #111418;
-  --color-slate-muted: #6b7280;
-  --color-amber-accent: #f98c1f;
-  --color-amber-glow: #fa983a;
-  --color-paper: #f8fafc;
-  --color-border-subtle: #e5e9f0;
+  /* === BORDER === */
+  --border-subtle  : #E5E5EA;       /* Divider, border card */
+  --border-input   : #D1D1D6;       /* Border input aktif */
+  --border-focus   : #007AFF;       /* Border input saat fokus */
+
+  /* === TEKS === */
+  --text-primary   : #1D1D1F;       /* Judul, label utama */
+  --text-secondary : #6E6E73;       /* Subtitle, deskripsi, placeholder */
+  --text-tertiary  : #AEAEB2;       /* Label disabled, teks sangat minor */
+  --text-inverse   : #FFFFFF;       /* Teks di atas tombol biru/gelap */
+
+  /* === AKSEN (hanya untuk fungsi, bukan dekorasi) === */
+  --accent-blue       : #007AFF;    /* Tombol primary, link, fokus */
+  --accent-blue-hover : #0071E3;    /* Hover state tombol primary */
+  --accent-green      : #34C759;    /* Status sukses, copy berhasil */
+  --accent-red        : #FF3B30;    /* Error, peringatan destruktif */
+  --accent-orange     : #FF9500;    /* Warning ringan */
+
+  /* === SHADOW === */
+  --shadow-xs  : 0 1px 2px rgba(0,0,0,0.06);
+  --shadow-sm  : 0 1px 4px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04);
+  --shadow-md  : 0 4px 12px rgba(0,0,0,0.10), 0 1px 3px rgba(0,0,0,0.06);
+
+  /* === TIPOGRAFI === */
+  --font-system : -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
+  --font-mono   : "SF Mono", "Menlo", "Monaco", "Consolas", monospace;
+
+  /* Scale */
+  --text-xs   : 11px;   /* Label mikro, caption */
+  --text-sm   : 13px;   /* Label, metadata, helper text */
+  --text-base : 15px;   /* Body, input, konten utama */
+  --text-md   : 17px;   /* Sub-heading blok */
+  --text-lg   : 20px;   /* Heading blok */
+  --text-xl   : 26px;   /* Heading halaman */
+
+  /* Weight */
+  --weight-regular  : 400;
+  --weight-medium   : 500;
+  --weight-semibold : 600;
+
+  /* Line height */
+  --leading-tight  : 1.3;
+  --leading-normal : 1.5;
+  --leading-loose  : 1.7;   /* Untuk teks panjang / output prompt */
+
+  /* === SPACING (Grid 8px) === */
+  --space-1  : 4px;
+  --space-2  : 8px;
+  --space-3  : 12px;
+  --space-4  : 16px;
+  --space-5  : 20px;
+  --space-6  : 24px;
+  --space-8  : 32px;
+  --space-10 : 40px;
+  --space-12 : 48px;
+
+  /* === BORDER RADIUS & LAINNYA === */
+  --radius-sm   : 6px;    /* Tombol kecil, badge */
+  --radius-md   : 10px;   /* Card, blok, input */
+  --radius-lg   : 14px;   /* Modal, panel besar */
+  --radius-full : 9999px; /* Pill / tag */
+
+  --transition-fast   : 120ms ease;
+  --transition-normal : 200ms ease;
+
+  /* === BREAKPOINT (TuneForge Responsive Spec) === */
+  --bp-tablet  : 768px;
+  --bp-laptop  : 1024px;
+  --bp-desktop : 1280px;
+  --bp-wide    : 1440px;
+
+  /* Lebar panel kiri per breakpoint */
+  --panel-left-laptop  : 360px;
+  --panel-left-desktop : 400px;
+  --panel-left-wide    : 440px;
+
+  /* Padding halaman per breakpoint */
+  --page-pad-mobile  : 16px;
+  --page-pad-tablet  : 28px;
+  --page-pad-laptop  : 32px;
+  --page-pad-desktop : 40px;
+  --page-pad-wide    : 48px;
+
+  /* Gap antar kolom */
+  --col-gap : 24px;
 }
 
 body {
-  font-family: var(--font-sans);
-  background-color: #ffffff;
-  color: #191c21;
+  font-family: var(--font-system);
+  background-color: var(--bg-base);
+  color: var(--text-primary);
+  font-size: var(--text-base);
+  line-height: var(--leading-normal);
   -webkit-font-smoothing: antialiased;
-}
-
-h1, h2, h3, h4, h5, h6 {
-  font-family: var(--font-display);
-  letter-spacing: -0.02em;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 code, pre, .font-mono {
   font-family: var(--font-mono);
 }
 
-/* Custom scrollbars */
+/* === KOMPONEN UI STANDAR MACOS === */
+
+/* Tombol Varian 1 — Primary (Aksi Utama) */
+.btn-primary {
+  background-color: var(--accent-blue);
+  color: var(--text-inverse);
+  padding: 8px 18px;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  border: none;
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-xs);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: background-color var(--transition-fast), opacity var(--transition-fast);
+  white-space: nowrap;
+}
+.btn-primary:hover:not(:disabled) {
+  background-color: var(--accent-blue-hover);
+}
+.btn-primary:disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Tombol Varian 2 — Secondary (Aksi Pendukung) */
+.btn-secondary {
+  background-color: var(--bg-base);
+  color: var(--text-primary);
+  border: 1px solid var(--border-input);
+  padding: 7px 16px;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-xs);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: background-color var(--transition-fast), border-color var(--transition-fast);
+  white-space: nowrap;
+}
+.btn-secondary:hover:not(:disabled) {
+  background-color: var(--bg-inset);
+}
+.btn-secondary:disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Tombol Varian 3 — Copy Button */
+.btn-copy {
+  background-color: var(--bg-inset);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-subtle);
+  padding: 5px 12px;
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  border-radius: var(--radius-sm);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  cursor: pointer;
+  transition: background-color var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.btn-copy:hover {
+  background-color: #E9E9EE;
+  color: var(--text-primary);
+}
+
+/* Tombol Varian 4 — Danger */
+.btn-danger {
+  background-color: transparent;
+  color: var(--accent-red);
+  border: 1px solid rgba(255, 59, 48, 0.3);
+  padding: 7px 16px;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  border-radius: var(--radius-sm);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+  white-space: nowrap;
+}
+.btn-danger:hover:not(:disabled) {
+  background-color: rgba(255, 59, 48, 0.06);
+}
+.btn-danger:disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Blok / Card Konten (3B) */
+.macos-card {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  padding: 16px;
+  box-sizing: border-box;
+}
+@media (min-width: 768px) {
+  .macos-card {
+    padding: 20px;
+  }
+}
+@media (min-width: 1024px) {
+  .macos-card {
+    padding: 24px;
+  }
+}
+@media (min-width: 1440px) {
+  .macos-card {
+    padding: 28px;
+  }
+}
+
+/* Header Blok */
+.macos-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding-bottom: var(--space-3);
+  margin-bottom: var(--space-4);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.macos-card-title {
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+
+.macos-card-desc {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+/* Input & Textarea (3C) */
+.macos-input {
+  background-color: var(--bg-inset);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  font-family: var(--font-system);
+  font-size: var(--text-base);
+  color: var(--text-primary);
+  width: 100%;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  outline: none;
+}
+.macos-input:focus {
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.15);
+}
+.macos-input::placeholder {
+  color: var(--text-tertiary);
+}
+
+.macos-textarea {
+  background-color: var(--bg-inset);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  line-height: var(--leading-loose);
+  color: var(--text-primary);
+  width: 100%;
+  resize: vertical;
+  outline: none;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+.macos-textarea:focus {
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.15);
+}
+
+/* Badge / Status Tag (3G) */
+.macos-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: var(--radius-full);
+  padding: 2px 8px;
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  background-color: #E5E5EA;
+  color: var(--text-secondary);
+}
+.macos-badge-active {
+  background-color: rgba(0, 122, 255, 0.12);
+  color: var(--accent-blue);
+}
+.macos-badge-success {
+  background-color: rgba(52, 199, 89, 0.12);
+  color: var(--accent-green);
+}
+.macos-badge-warning {
+  background-color: rgba(255, 149, 0, 0.12);
+  color: var(--accent-orange);
+}
+
+/* Divider (3F) */
+.macos-divider {
+  height: 1px;
+  background-color: var(--border-subtle);
+  border: none;
+  margin: var(--space-6) 0;
+}
+
+/* Custom scrollbars (macOS native style) */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -39,9 +344,324 @@ code, pre, .font-mono {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: #C7C7CC;
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: #8E8E93;
 }
+
+/* ==========================================================================
+   TUNEFORGE RESPONSIVE LAYOUT SPECIFICATION
+   Breakpoint Agresif + Dua Kolom ab 1024px (Gantikan max-width: 780px)
+   ========================================================================== */
+
+/* ─── 4A. BASE LAYOUT (Mobile-First) ─── */
+
+/* ─── HEADER ─── */
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  width: 100%;
+  height: 52px;
+  padding: 0 var(--page-pad-mobile);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--bg-overlay);
+  backdrop-filter: blur(20px) saturate(1.8);
+  -webkit-backdrop-filter: blur(20px) saturate(1.8);
+  border-bottom: 1px solid var(--border-subtle);
+  box-sizing: border-box;
+}
+
+/* ─── WRAPPER UTAMA ─── */
+.app-layout {
+  display: flex;
+  flex-direction: column;       /* Mobile: vertikal */
+  min-height: calc(100vh - 52px);
+  padding: var(--space-5) var(--page-pad-mobile);
+  gap: var(--space-5);
+  max-width: 100%;              /* TIDAK ada max-width — gunakan penuh */
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* ─── PANEL KIRI (Mobile: urutan pertama) ─── */
+.panel-left {
+  width: 100%;
+}
+
+.panel-left__inner {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+/* ─── PANEL KANAN (Mobile: urutan kedua, di bawah) ─── */
+.panel-right {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+/* ─── TOMBOL GENERATE BAR ─── */
+.generate-bar {
+  position: sticky;
+  bottom: 0;
+  padding: var(--space-3) 0;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    var(--bg-base) 40%
+  );
+  z-index: 10;
+}
+
+.generate-bar .btn-primary {
+  width: 100%;
+}
+
+/* ─── OUTPUT BLOCK ─── */
+.output-block {
+  display: none;            /* Tersembunyi sampai ada output */
+}
+
+.output-block.has-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  animation: fadeSlideIn 200ms ease forwards;
+}
+
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ─── BLOK & TYPOGRAPHY PER BREAKPOINT ─── */
+.block {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  padding: 16px; /* Mobile: 16px */
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  box-sizing: border-box;
+}
+
+.block__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding-bottom: var(--space-3);
+  margin-bottom: var(--space-1);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.block__title {
+  font-size: var(--text-md);  /* 17px */
+  font-weight: var(--weight-semibold);
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+.block__description {
+  font-size: var(--text-sm);  /* 13px */
+  color: var(--text-secondary);
+  margin-top: 2px;
+  margin-bottom: 0;
+}
+
+.output-text {
+  font-size: var(--text-sm);  /* 13px */
+  color: var(--text-primary);
+}
+
+.output-textarea {
+  background-color: var(--bg-inset);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  line-height: var(--leading-loose);
+  color: var(--text-primary);
+  width: 100%;
+  resize: vertical;
+  outline: none;
+  max-height: 280px;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  box-sizing: border-box;
+}
+
+.output-textarea:focus {
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.15);
+}
+
+/* ─── 4B. TABLET — 768px ke atas ─── */
+@media (min-width: 768px) {
+  .app-header {
+    padding: 0 var(--page-pad-tablet);
+  }
+
+  .app-layout {
+    padding: var(--space-6) var(--page-pad-tablet);
+    gap: var(--space-6);
+  }
+
+  /* Blok card sedikit lebih lega */
+  .block {
+    padding: 20px;
+  }
+
+  /* Font naik satu tingkat */
+  .block__title {
+    font-size: var(--text-lg); /* 20px */
+  }
+
+  /* Tombol generate tidak full width di tablet */
+  .generate-bar .btn-primary {
+    width: auto;
+    min-width: 180px;
+  }
+
+  .generate-bar {
+    display: flex;
+    justify-content: flex-end;
+  }
+}
+
+/* ─── 4C. LAPTOP — 1024px ke atas (DUA KOLOM AKTIF) ─── */
+@media (min-width: 1024px) {
+  .app-header {
+    padding: 0 var(--page-pad-laptop);
+  }
+
+  /* ─── AKTIFKAN DUA KOLOM ─── */
+  .app-layout {
+    flex-direction: row;          /* Kini horizontal */
+    align-items: flex-start;      /* Kedua panel mulai dari atas */
+    padding: var(--space-6) var(--page-pad-laptop);
+    gap: var(--col-gap);
+    max-width: 100%;              /* TIDAK ada max-width — gunakan penuh */
+  }
+
+  /* ─── PANEL KIRI: lebar tetap, sticky ─── */
+  .panel-left {
+    width: var(--panel-left-laptop);
+    flex-shrink: 0;               /* Tidak menyusut */
+    position: sticky;
+    top: calc(52px + var(--space-4));   /* Di bawah header */
+    max-height: calc(100vh - 52px - var(--space-8));
+    overflow-y: auto;             /* Scroll mandiri jika konten panjang */
+    scrollbar-width: none;        /* Sembunyikan scrollbar (Firefox) */
+  }
+
+  .panel-left::-webkit-scrollbar {
+    display: none;                /* Sembunyikan scrollbar (Chrome/Safari) */
+  }
+
+  /* ─── PANEL KANAN: flex, isi sisa lebar ─── */
+  .panel-right {
+    flex: 1;                      /* Ambil semua sisa lebar */
+    min-width: 0;                 /* Cegah overflow */
+  }
+
+  /* Generate bar: tidak sticky di layout dua kolom */
+  .generate-bar {
+    position: static;
+    background: transparent;
+    padding: var(--space-2) 0 0;
+    display: block;
+  }
+
+  .generate-bar .btn-primary {
+    width: 100%;                  /* Full width dalam panel kiri */
+  }
+
+  /* Output block: tampil dalam grid 1 kolom di panel kanan */
+  .output-block.has-content {
+    flex-direction: column;
+  }
+
+  /* Area teks output lebih tinggi karena layar lebih lega */
+  .output-textarea {
+    max-height: 340px;
+  }
+
+  .output-text {
+    font-size: var(--text-base); /* 15px */
+  }
+
+  .block {
+    padding: 24px;
+  }
+}
+
+/* ─── 4D. DESKTOP — 1280px ke atas ─── */
+@media (min-width: 1280px) {
+  .app-header {
+    padding: 0 var(--page-pad-desktop);
+  }
+
+  .app-layout {
+    padding: var(--space-8) var(--page-pad-desktop);
+    gap: 32px;
+  }
+
+  .panel-left {
+    width: var(--panel-left-desktop);
+  }
+
+  /* Output Blok 4: Prompt A dan B berdampingan */
+  #output-4 .dual-prompt-wrapper {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-4);
+  }
+
+  .output-textarea {
+    max-height: 400px;
+  }
+}
+
+/* ─── 4E. WIDE — 1440px ke atas ─── */
+@media (min-width: 1440px) {
+  .app-header {
+    padding: 0 var(--page-pad-wide);
+    gap: 40px;
+  }
+
+  .app-layout {
+    padding: var(--space-8) var(--page-pad-wide);
+    gap: 40px;
+  }
+
+  .panel-left {
+    width: var(--panel-left-wide);
+  }
+
+  .output-textarea {
+    max-height: 460px;
+  }
+
+  /* Font panel kanan sedikit lebih besar di layar lebar */
+  .panel-right .output-block__title {
+    font-size: var(--text-lg);
+  }
+
+  .block {
+    padding: 28px;
+  }
+}
+
+

@@ -16,13 +16,18 @@ export interface ThumbnailPromptDetail {
   styleKey: 'cinematic' | 'split' | 'minimal' | 'lifestyle';
   aspectRatio: string; // '16:9'
   targetCTR: string; // '>20%'
-  fullPrompt: string; // The complete English prompt for AI image generators
+  fullPrompt: string; // The complete boxed ASCII dual output format (v1.1)
   renderPrompt?: string; // Prompt without commentary
+  promptA: string; // Prompt Versi A (dengan zona teks untuk Canva/Editor)
+  promptB: string; // Prompt Versi B (full frame visual penuh tanpa zona teks)
+  modifierA: string; // Modifier wajib A
+  modifierB: string; // Modifier wajib B
   formattedBlock: string; // Complete boxed ASCII output format matching the mandatory standard
   categoryTitle: string;
   styleTitle: string;
   ctrStrategy: string;
   rawPrompt: string;
+  categorySpecialNote?: string;
   recommendedText: {
     option1: string;
     option2: string;
@@ -34,6 +39,10 @@ export interface ThumbnailPromptDetail {
     focalPoint: string;
     textZone: string;
     keyContrast: string;
+    versionB?: {
+      focalPoint: string;
+      fullFrame: string;
+    };
   };
   ctrPalette: {
     dominant: { name: string; hex: string };
@@ -49,8 +58,14 @@ export interface ThumbnailPromptDetail {
   };
   platformPrompts: {
     standard: string;
+    standardA?: string;
+    standardB?: string;
     midjourney: string;
+    midjourneyA?: string;
+    midjourneyB?: string;
     dalle3: string;
+    dalle3A?: string;
+    dalle3B?: string;
     stableDiffusion: {
       positive: string;
       negative: string;
@@ -86,8 +101,13 @@ export interface ThumbnailGenerationInput {
   optionalKeyword?: string;
 }
 
-export const THUMBNAIL_MANDATORY_MODIFIERS =
+export const THUMBNAIL_MANDATORY_MODIFIERS_A =
   'thumbnail composition optimized, high contrast focal point, clean zones for text overlay, readable at 320x180 pixels, strong color blocking, single dominant focal point, professional YouTube thumbnail quality, no watermark, no text, no border, no logo';
+
+export const THUMBNAIL_MANDATORY_MODIFIERS_B =
+  'full frame visual composition, entire frame filled with rich layered scene, no reserved text zones, focal point can be centered or rule-of-thirds with full depth, high contrast focal point, readable at 320x180 pixels, strong color blocking, single dominant focal point, immersive background detail, professional YouTube thumbnail quality, no watermark, no text, no border, no logo';
+
+export const THUMBNAIL_MANDATORY_MODIFIERS = THUMBNAIL_MANDATORY_MODIFIERS_A;
 
 export const THUMBNAIL_UNIVERSAL_NEGATIVE_PROMPT =
   'blurry focal point, multiple competing focal points, text in image, watermark, logo, border, frame, cluttered composition, too many elements, flat lighting, stock photo generic feel, bad composition, centered composition without breathing room, pixelated, jpeg artifacts, too dark to see at small size, too bright without contrast, over-saturated without focus, cartoon clipart, 3D render, nsfw, violence';
@@ -109,6 +129,10 @@ export interface CategoryThumbnailBlueprint {
     focalPoint: string;
     textZone: string;
     keyContrast: string;
+    versionB?: {
+      focalPoint: string;
+      fullFrame: string;
+    };
   };
   ctrPalette: {
     dominant: { name: string; hex: string };
@@ -886,13 +910,146 @@ export function resolveThumbnailCategoryBlueprint(categoryName: string, genre?: 
 }
 
 /**
+ * Generates Prompt Versi B (Full Frame — visual penuh tanpa zona teks).
+ * Strips out text-zone reservations, rebalances focal points toward golden ratio or center,
+ * expands background depth into full environmental layered detail, and appends Modifier Wajib B.
+ */
+export function buildThumbnailPromptVersionB(params: {
+  promptA: string;
+  styleKey: 'cinematic' | 'split' | 'minimal' | 'lifestyle';
+  categoryTitle?: string;
+  categoryId?: string;
+  focalPoint?: string;
+}): string {
+  const { promptA, styleKey, categoryId } = params;
+  let p = promptA || '';
+
+  // 1. Strip Prompt A modifiers
+  p = p.replace(THUMBNAIL_MANDATORY_MODIFIERS_A, '');
+  p = p.replace(THUMBNAIL_MANDATORY_MODIFIERS, '');
+  p = p.replace(/thumbnail composition optimized.*$/i, '');
+
+  // 2. Adjust color palette clause if present: replace text zone requirement with harmonious environmental lighting
+  p = p.replace(/,\s*[^,]*\bfor text zone area\b/gi, ', harmonious layered environmental lighting across canvas');
+  p = p.replace(/,\s*color palette:\s*/gi, ', color palette: ');
+
+  // 3. Remove custom text position directives from POS-A through POS-F
+  p = p.replace(/left third of frame must be flat[^,]*, main subject positioned on right side/gi, 'focal point centered or positioned at golden ratio point with full depth, rich layered background with environmental detail');
+  p = p.replace(/right third of frame must be flat[^,]*, main subject positioned on left side/gi, 'focal point centered or positioned at golden ratio point with full depth, rich layered background with environmental detail');
+  p = p.replace(/top 25% of frame must be flat[^,]*, main subject fills lower 75%/gi, 'entire vertical frame filled with towering atmospheric layers and rich environmental depth');
+  p = p.replace(/bottom 25% of frame must be flat[^,]*, main subject fills upper 75%/gi, 'foreground and ground plane filled with rich texture, grounded depth, and atmospheric perspective');
+  p = p.replace(/center-left 40% of frame is clean flat area[^,]*, focal point element positioned on right side of frame/gi, 'balanced full-frame composition with focal point positioned at golden ratio point, rich layered depth across entire frame');
+  p = p.replace(/minimalist background occupying 60–70% of frame[^,]*, background is clean enough to function as full text canvas/gi, 'minimalist composition where negative space is an intentional aesthetic choice and not a text zone, pristine artistic atmosphere');
+
+  // 4. Style-specific and category-specific text zone replacements
+  if (styleKey === 'minimal') {
+    p = p.replace(/70% calm dark midnight blue wash with subtle soft raindrops on window glass creating high-contrast negative space for headline text/gi,
+      'calm dark midnight blue wash with rain-streaked glass spanning the scene where the negative space is an intentional aesthetic choice, not a text zone');
+    p = p.replace(/75% pure negative black space allowing large typographic title placement with maximum contrast/gi,
+      'pure negative obsidian space where the negative space is an intentional aesthetic choice, not a text zone, evoking profound quietude');
+    p = p.replace(/60% of canvas designed for bold title typography/gi,
+      'negative space as an intentional aesthetic choice, not a text zone, with sublime fine-art balance');
+    p = p.replace(/70% clean gradient sky for large typographic title/gi,
+      'expansive storm sky where the open negative space is an intentional aesthetic choice, not a text zone, framing the solitary peak');
+    p = p.replace(/75% dark negative space for high-contrast white text overlay/gi,
+      'dark negative space as an intentional aesthetic choice, not a text zone, conveying sublime stillness');
+    p = p.replace(/70% clean sunlit stucco background for title text overlay/gi,
+      'sunlit stucco wall where negative space is an intentional aesthetic choice, not a text zone');
+    p = p.replace(/75% of frame is clean dark gradient zone for large song title text, instrument sharp and detailed in remaining 25%/gi,
+      'instrument centered or at golden ratio with full stage lighting, dramatic beam slicing through atmospheric arena haze filling the entire frame');
+    p = p.replace(/negative space for (?:headline|title|bold) text/gi,
+      'negative space as an intentional aesthetic choice, not a text zone');
+    p = p.replace(/for (?:large|bold)?\s*(?:typographic|song)?\s*title(?:\s*placement|\s*overlay)?/gi,
+      'where the negative space is an intentional aesthetic choice, not a text zone');
+  } else if (styleKey === 'split') {
+    p = p.replace(/Right half:\s*deep rainy midnight window looking out at distant blurred Tokyo cityscape, providing a clean flat navy blue backdrop dedicated for text overlay/gi,
+      'Right half: Tokyo midnight cityscape in deep navy blue with glowing neon bokeh, wet street reflections, and layered architectural depth across the entire right frame');
+    p = p.replace(/right half:\s*deep black velvet background with subtle gold dust particles floating, strong visual divide between detailed left and clean right zones/gi,
+      'right half: dramatic grand concert hall perspective with warm tier lighting and floating golden dust motes, both sides visually full and compelling');
+    p = p.replace(/Right half:\s*pristine light oak desk surface bathed in soft window sunlight, providing a clean minimalist 50% zone for bold text overlay/gi,
+      'Right half: harmonious Scandinavian desk elements, open art book, and natural sunlit plant shadows creating balanced depth across both halves');
+    p = p.replace(/Right two-thirds:\s*fiery golden sunset breaking through parting clouds over distant mountain peaks, providing a high-contrast open sky zone for epic movie-title typography/gi,
+      'Right two-thirds: fiery golden sunset breaking through parting clouds over distant jagged mountain peaks, filling the horizon with monumental cinematic detail');
+    p = p.replace(/Right half:\s*deep velvety bordeaux-black shadow backdrop completely empty and optimized for large title typography/gi,
+      'Right half: acoustic concert hall interior with antique velvet textures, warm wood wall reflections, and soft floating particles across full frame');
+    p = p.replace(/Right half:\s*clean white-washed Mediterranean stucco wall with soft leaf shadows providing an immaculate high-contrast zone for dark typography/gi,
+      'Right half: sun-drenched coastal patio overlooking blue ocean waves framed by blossoming bougainvillea and olive tree foliage');
+    p = p.replace(/right half is deep solid dark gradient[^,]*completely clean for title text overlay, hard visual split between illuminated left and dark right/gi,
+      'right half features dramatic concert lighting reflections, subtle smoke swirls, and stage illumination with deep dynamic contrast');
+    p = p.replace(/clean flat navy blue backdrop dedicated for text overlay/gi,
+      'rich atmospheric nighttime depth and detailed city glow across the entire right frame');
+    p = p.replace(/providing a clean minimalist 50% zone for bold text overlay/gi,
+      'harmonious Scandinavian desk elements bathed in natural sunlight with full depth');
+    p = p.replace(/providing a high-contrast open sky zone for epic movie-title typography/gi,
+      'parting storm clouds and radiant golden mountain horizon with epic cinematic detail');
+  } else if (styleKey === 'cinematic') {
+    p = p.replace(/rule of thirds composition with window frame on left, open dark sky on right as text zone/gi,
+      'focal point positioned at golden ratio point with full depth, window frame revealing deep night sky with layered atmospheric city glow across entire frame');
+    p = p.replace(/keys positioned on left and center third, deep black empty space on right as clean text zone/gi,
+      'keys stretching through center frame with dramatic chiaroscuro spotlight, deep velvet auditorium ambience wrapping around with acoustic depth');
+    p = p.replace(/clean text zone/gi,
+      'rich layered background with full depth of field detail, atmospheric depth, full environmental detail, cinematic scene, no reserved text zones');
+    p = p.replace(/massive sky occupying upper two-thirds as text zone/gi,
+      'massive dynamic sky spanning full frame with towering cumulonimbus clouds, radiant god rays, and atmospheric haze');
+    p = p.replace(/dark right zone clean for text/gi,
+      'deep mahogany music room in chiaroscuro with soft ambient candlelight, floating rosin dust, and full environmental depth');
+    p = p.replace(/providing massive high-contrast negative space for headline song title/gi,
+      'empty arena stage with warm golden volumetric light beams slicing through atmospheric haze across full frame');
+    p = p.replace(/bright open sky on the right side serving as text zone/gi,
+      'glittering ocean waves extending to golden sunset horizon with lush palm fronds framing the scene');
+  } else if (styleKey === 'lifestyle') {
+    p = p.replace(/subject positioned on left one-third, large softly-lit bokeh window occupying right two-thirds as clean text zone/gi,
+      'cozy study corner centered or positioned at golden ratio with full depth, large rain-streaked window spanning background with layered bokeh city lights, wet glass reflections, and warm interior books and plants');
+    p = p.replace(/soft dark curtain creating an uncluttered text area/gi,
+      'rich textured interior drapery and warm conservatory depth filling the frame');
+    p = p.replace(/deep blue mountain fog fills the left two-thirds as a clean zone for text/gi,
+      'deep blue mountain fog rolling through layered pine valleys at sunrise, creating breathtaking atmospheric depth across the entire frame');
+    p = p.replace(/soft shadow fills the right side of the frame creating a clean zone for title text/gi,
+      'warm room depth, vintage sheet music, and atmospheric lighting filling the background');
+    p = p.replace(/bright stucco wall on right as clean text zone/gi,
+      'weathered stucco wall adorned with lush flowering bougainvillea vines and warm terracotta textures across the frame');
+    p = p.replace(/soft dark acoustic foam wall on right side providing clear dark canvas for title text/gi,
+      'studio recording monitors, acoustic wood diffusers, and warm twilight ambience filling the background');
+  }
+
+  // 5. Generic sweep of leftover text zone mentions
+  p = p.replace(/,\s*(?:with\s+)?(?:the\s+)?(?:left|right|top|bottom)\s*(?:third|half|quarter|two-thirds)?\s*(?:is\s+)?(?:a\s+)?(?:clean\s+)?text\s*(?:overlay\s*)?zone[^,]*/gi, '');
+  p = p.replace(/,\s*(?:with\s+)?(?:a\s+)?clean text zone[^,]*/gi, '');
+  p = p.replace(/,\s*reserved (?:for|as)\s*(?:a\s+)?(?:clean\s+)?text\s*(?:overlay\s*)?zone[^,]*/gi, '');
+  p = p.replace(/,\s*clean\s*(?:low-detail\s*)?text\s*zone[^,]*/gi, '');
+  p = p.replace(/,\s*dedicated (?:for|as) text overlay[^,]*/gi, '');
+  p = p.replace(/,\s*for text overlay[^,]*/gi, '');
+  p = p.replace(/,\s*clean zones for text overlay/gi, '');
+
+  // 6. Section 7 Category adjustments
+  if (categoryId === 'cat-03' || categoryId === 'cat-16') {
+    p = p.replace(/\b(?:3|8)\s*HOURS\b/g, '');
+  }
+
+  // 7. Ensure composition and depth instructions are present
+  if (!p.includes('full frame') && !p.includes('full depth')) {
+    p = `${p}, full frame visual composition, centered or positioned at golden ratio point with full depth, rich layered background with full depth of field detail, atmospheric depth, full environmental detail, cinematic scene, no reserved text zones`;
+  }
+
+  // 8. Clean up extra punctuation and whitespace, then append Modifier Wajib B
+  p = p.replace(/,\s*,+/g, ',').replace(/\s{2,}/g, ' ').trim();
+  p = p.replace(/,\s*$/, '');
+  
+  return `${p}, ${THUMBNAIL_MANDATORY_MODIFIERS_B}`;
+}
+
+/**
  * Builds the exact mandatory boxed output format required by TuneForge Thumbnail Engine v1.1.
+ * Features dual prompt output: Prompt A (With Text Zone) & Prompt B (Full Frame).
  */
 export function formatMandatoryThumbnailOutput(params: {
   categoryTitle: string;
   styleTitle: string;
   ctrStrategy: string;
-  prompt: string;
+  prompt: string; // for backwards compatibility
+  promptA?: string;
+  promptB?: string;
+  categorySpecialNote?: string;
   recommendedText: {
     option1: string;
     option2: string;
@@ -904,6 +1061,10 @@ export function formatMandatoryThumbnailOutput(params: {
     focalPoint: string;
     textZone: string;
     keyContrast: string;
+    versionB?: {
+      focalPoint: string;
+      fullFrame: string;
+    };
   };
   ctrPalette: {
     dominant: { name: string; hex: string };
@@ -936,16 +1097,35 @@ export function formatMandatoryThumbnailOutput(params: {
     ? `\n\n${warnings.join('\n\n')}`
     : '';
 
+  const promptAVersion = params.promptA || params.prompt;
+  const promptBVersion = params.promptB || promptAVersion;
+
+  const versionBFocal = params.compositionGuide.versionB?.focalPoint || 'Centered atau golden ratio point dengan kedalaman optik penuh';
+  const versionBFull = params.compositionGuide.versionB?.fullFrame || 'Seluruh frame diisi dengan scene visual berlapis detail, tanpa zona teks kosong';
+
+  const categoryNoteBlock = params.categorySpecialNote
+    ? `\n*Catatan: ${params.categorySpecialNote}*`
+    : '';
+
   return `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 🎯 KATEGORI     : ${params.categoryTitle}
 🖼️  GAYA         : ${params.styleTitle}
-📍 POSISI TEKS  : ${posLabel}
+📍 POSISI TEKS  : ${posLabel} (hanya berlaku untuk Prompt A)
 🎨 PALET WARNA  : ${palLabel}
 ⚡ STRATEGI CTR : ${params.ctrStrategy}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${warningsBlock}
 
-📸 PROMPT THUMBNAIL:
-${params.prompt}
+╔══════════════════════════════════════╗
+║  📸 PROMPT A — DENGAN ZONA TEKS      ║
+║  (Teks ditambahkan via Canva/Editor) ║
+╚══════════════════════════════════════╝
+${promptAVersion}
+
+╔══════════════════════════════════════╗
+║  🖼️  PROMPT B — FULL FRAME            ║
+║  (Visual penuh, tanpa zona teks)     ║
+╚══════════════════════════════════════╝
+${promptBVersion}${categoryNoteBlock}
 
 ✍️  TEKS OVERLAY YANG DIREKOMENDASIKAN:
 • OPSI 1 — FOKUS     : ${params.recommendedText.option1}
@@ -953,22 +1133,21 @@ ${params.prompt}
 • OPSI 3 — MANFAAT   : ${params.recommendedText.option3}
 → TERBAIK UNTUK KATEGORI INI: ${params.recommendedText.bestOption} karena ${params.recommendedText.bestReason}
 
-📐 PANDUAN KOMPOSISI THUMBNAIL:
-• Focal point   : ${params.compositionGuide.focalPoint}
-• Zona teks     : ${params.compositionGuide.textZone}
-• Kontras kunci : ${params.compositionGuide.keyContrast}
+📐 PANDUAN KOMPOSISI:
+• VERSI A  → Focal point: ${params.compositionGuide.focalPoint} | Zona teks: ${params.compositionGuide.textZone} | Kontras: ${params.compositionGuide.keyContrast}
+• VERSI B  → Focal point: ${versionBFocal} | Full frame: ${versionBFull}
 
-🎨 PALET CTR THUMBNAIL [${palLabel}]:
-• Dominan  : ${params.ctrPalette.dominant.name} [${params.ctrPalette.dominant.hex}]
-• Aksen    : ${params.ctrPalette.accent.name} [${params.ctrPalette.accent.hex}]
-• Zona teks: ${params.ctrPalette.textZone.type} — [${params.ctrPalette.textZone.hex}]
+🎨 PALET CTR THUMBNAIL:
+• Dominan   : ${params.ctrPalette.dominant.name} [${params.ctrPalette.dominant.hex}]
+• Aksen     : ${params.ctrPalette.accent.name} [${params.ctrPalette.accent.hex}]
+• Zona teks : [${params.ctrPalette.textZone.hex}] — hanya berlaku untuk Prompt A
 
 🚫 ANTI-PATTERN — JANGAN LAKUKAN INI:
 ${antiPatternLines}
 
 ⚙️  SPESIFIKASI TEKNIS:
 Rasio: 16:9 | Generate: 1792×1024px | Preview uji: 320×180px (mobile)
-Platform: Midjourney v6 (--ar 16:9 --v 6) / DALL-E 3 / Stable Diffusion XL
+Platform: Midjourney v6 / DALL-E 3 / Stable Diffusion XL
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`;
 }
 
@@ -1139,12 +1318,26 @@ export function generateEngineeredThumbnailPrompts(input: ThumbnailGenerationInp
       bp.id
     );
 
-    // Apply Position & Color modifications to the raw prompt
-    const modifiedPrompt = applyPositionAndColorToPrompt(
+    // Apply Position & Color modifications to the raw prompt (Prompt Versi A)
+    const promptA = applyPositionAndColorToPrompt(
       cfg.rawPrompt,
       activePositionCode,
       activePalette
     );
+
+    // Generate Prompt Versi B (Full Frame, no text zone, immersive composition)
+    const promptB = buildThumbnailPromptVersionB({
+      promptA,
+      styleKey: cfg.key,
+      categoryTitle: bp.name,
+      categoryId: bp.id,
+      focalPoint: bp.compositionGuide.focalPoint
+    });
+
+    // Special category note (Section 7)
+    const categorySpecialNote = (bp.id === 'cat-07' || bp.id === '07' || bp.name.toLowerCase().includes('cover'))
+      ? 'Untuk Kategori Cover Instrumental, teks judul lagu tetap sangat disarankan ditambahkan via editor — gunakan Prompt A untuk keperluan ini.'
+      : undefined;
 
     // Dynamic composition guide text zone
     const resolvedTextZone = activePositionCode !== 'POS-AUTO'
@@ -1155,11 +1348,18 @@ export function generateEngineeredThumbnailPrompts(input: ThumbnailGenerationInp
       categoryTitle: bp.name,
       styleTitle: cfg.name,
       ctrStrategy: bp.ctrPsychology,
-      prompt: modifiedPrompt,
+      prompt: promptA,
+      promptA,
+      promptB,
+      categorySpecialNote,
       recommendedText: customizedTextOptions,
       compositionGuide: {
         ...bp.compositionGuide,
-        textZone: resolvedTextZone
+        textZone: resolvedTextZone,
+        versionB: {
+          focalPoint: 'Centered atau golden ratio point dengan kedalaman optik penuh',
+          fullFrame: 'Seluruh frame diisi dengan scene visual berlapis detail, tanpa zona teks kosong'
+        }
       },
       ctrPalette: {
         dominant: activePalette.dominant,
@@ -1179,8 +1379,10 @@ export function generateEngineeredThumbnailPrompts(input: ThumbnailGenerationInp
       paletteToneWarning
     });
 
-    const midjourney = `${modifiedPrompt} --ar 16:9 --v 6 --style raw --q 2`;
-    const dalle3 = `In a 16:9 landscape format YouTube thumbnail: ${modifiedPrompt}`;
+    const midjourneyA = `${promptA} --ar 16:9 --v 6 --style raw --q 2`;
+    const midjourneyB = `${promptB} --ar 16:9 --v 6 --style raw --q 2`;
+    const dalle3A = `In a 16:9 landscape format YouTube thumbnail: ${promptA}`;
+    const dalle3B = `In a 16:9 landscape format YouTube thumbnail: ${promptB}`;
     const sdNegative = THUMBNAIL_UNIVERSAL_NEGATIVE_PROMPT;
 
     const detail: ThumbnailPromptDetail = {
@@ -1189,16 +1391,25 @@ export function generateEngineeredThumbnailPrompts(input: ThumbnailGenerationInp
       aspectRatio: '16:9',
       targetCTR: cfg.targetCTR,
       fullPrompt: formattedBlock,
-      renderPrompt: modifiedPrompt,
+      renderPrompt: promptA,
+      promptA,
+      promptB,
+      modifierA: THUMBNAIL_MANDATORY_MODIFIERS_A,
+      modifierB: THUMBNAIL_MANDATORY_MODIFIERS_B,
       formattedBlock,
       categoryTitle: bp.name,
       styleTitle: cfg.name,
       ctrStrategy: bp.ctrPsychology,
-      rawPrompt: modifiedPrompt,
+      rawPrompt: promptA,
+      categorySpecialNote,
       recommendedText: customizedTextOptions,
       compositionGuide: {
         ...bp.compositionGuide,
-        textZone: resolvedTextZone
+        textZone: resolvedTextZone,
+        versionB: {
+          focalPoint: 'Centered atau golden ratio point dengan kedalaman optik penuh',
+          fullFrame: 'Seluruh frame diisi dengan scene visual berlapis detail, tanpa zona teks kosong'
+        }
       },
       ctrPalette: {
         dominant: activePalette.dominant,
@@ -1216,11 +1427,17 @@ export function generateEngineeredThumbnailPrompts(input: ThumbnailGenerationInp
         platforms: 'Midjourney v6 (--ar 16:9 --v 6) / DALL-E 3 / Stable Diffusion XL'
       },
       platformPrompts: {
-        standard: modifiedPrompt,
-        midjourney,
-        dalle3,
+        standard: promptA,
+        standardA: promptA,
+        standardB: promptB,
+        midjourney: midjourneyA,
+        midjourneyA,
+        midjourneyB,
+        dalle3: dalle3A,
+        dalle3A,
+        dalle3B,
         stableDiffusion: {
-          positive: modifiedPrompt,
+          positive: promptA,
           negative: sdNegative,
           cfgScale: 7,
           sampler: 'DPM++ 2M',
@@ -1236,7 +1453,7 @@ export function generateEngineeredThumbnailPrompts(input: ThumbnailGenerationInp
       clickTriggerReason: bp.ctrPsychology,
       visualRules: {
         contrastPair: bp.compositionGuide.keyContrast,
-        focusDepth: 'Razor-sharp dominant focal point with 25-40% clean low-detail text zone',
+        focusDepth: 'Versi A: focal point dengan 25-40% zona teks clean. Versi B: full-frame tanpa zona teks terisolasi.',
         lighting: 'High dynamic directional contrast, strong color blocking',
         emotion: bp.ctrPsychology,
         palette: `${activePalette.dominant.name} (${activePalette.dominant.hex}) & ${activePalette.accent.name} (${activePalette.accent.hex})`
@@ -1269,9 +1486,11 @@ export function cleanPromptForTextOverlay(rawPrompt: string): string {
 /**
  * Generates platform-specific prompts that thoroughly combine visual imagery
  * AND integrated text typography overlay matching the simulator preview.
+ * Supports version A (with text safe zone for Canva) and version B (full frame).
  */
 export function generateComprehensiveThumbnailPlatformPrompt(params: {
   platform: 'google-flow' | 'chatgpt' | 'general';
+  version?: 'A' | 'B';
   detail: ThumbnailPromptDetail;
   overlayText: string;
   categoryName?: string;
@@ -1290,9 +1509,11 @@ export function generateComprehensiveThumbnailPlatformPrompt(params: {
   };
   warnings?: string[];
 }): string {
-  const { platform, detail, overlayText, categoryName, duration, appliedPrompt, textPosition, activePalette, warnings } = params;
+  const { platform, version = 'A', detail, overlayText, categoryName, duration, appliedPrompt, textPosition, activePalette, warnings } = params;
   const catTitle = categoryName || detail.categoryTitle || 'Instrumental Music';
-  const baseScenePrompt = appliedPrompt || detail.rawPrompt || detail.renderPrompt || '';
+
+  // Determine base prompt according to Version A or B
+  const baseScenePrompt = appliedPrompt || (version === 'B' ? (detail.promptB || detail.rawPrompt) : (detail.promptA || detail.rawPrompt || detail.renderPrompt)) || '';
   const cleanedScene = cleanPromptForTextOverlay(baseScenePrompt);
 
   const domColor = activePalette?.dominant?.name || detail.ctrPalette?.dominant?.name || 'Deep Navy';
@@ -1302,6 +1523,51 @@ export function generateComprehensiveThumbnailPlatformPrompt(params: {
   const zoneHex = activePalette?.textZone?.hex || detail.ctrPalette?.textZone?.hex || '#0D1020';
   const durStamp = duration || '3:00:00';
 
+  const warningsHeader = (warnings && warnings.length > 0)
+    ? `[NOTES: ${warnings.join(' | ')}]\n\n`
+    : '';
+
+  // PROMPT B: FULL FRAME (No Text Zone, pure visual atmosphere)
+  if (version === 'B') {
+    switch (platform) {
+      case 'google-flow':
+        return `${warningsHeader}[GOOGLE FLOW / IMAGEN 3 — YOUTUBE THUMBNAIL 16:9 — FULL FRAME]
+Prompt:
+A high-CTR YouTube thumbnail in 16:9 aspect ratio for ${catTitle}, ${cleanedScene}. Full frame visual composition, entire frame filled with rich layered scene, no reserved text zones, focal point can be centered or rule-of-thirds with full depth, high contrast focal point, readable at 320x180 pixels, strong color blocking, single dominant focal point, immersive background detail, professional YouTube thumbnail quality, no watermark, no text, no border, no logo.
+
+Visual Composition & Environmental Depth (PROMPT B: FULL FRAME):
+- Composition: Full frame visual composition with layered scene depth (no reserved text zones, no baked-in text).
+- Focal Point: Centered or golden ratio point with high dynamic contrast and sharp subject separation.
+- Color Harmony: Rich ${domColor} (${domHex}) dominant backdrop with vivid ${accColor} (${accHex}) accents across entire canvas.
+- Mobile CTR Rule: Tested and guaranteed for 0.3-second glance comprehension on smartphone feeds.
+
+Technical Specifications:
+- Aspect Ratio: 16:9 widescreen (1792×1024 px)
+- Lighting & Texture: High dynamic contrast, sharp focal point, strong color blocking, deep atmospheric depth
+- Quality: 8K resolution, cinematic lighting, professional YouTube thumbnail artwork, zero text, zero watermark`;
+
+      case 'chatgpt':
+        return `${warningsHeader}[CHATGPT / DALL-E 3 PROMPT — FULL FRAME]
+"Generate a professional, high-CTR YouTube thumbnail in 16:9 aspect ratio for a ${catTitle} music track.
+
+VISUAL SCENE & FULL FRAME COMPOSITION:
+${cleanedScene}
+
+FULL FRAME COMPOSITION RULES (PROMPT B: NO TEXT):
+1. No Text: Do NOT render any text, words, or letters on the image. The entire frame is dedicated to pure visual atmosphere and immersive depth.
+2. Balanced Depth: Entire frame filled with rich layered depth. Subject centered or at golden ratio with immersive environmental background.
+3. Color & Contrast: Strong color blocking (${domColor} ${domHex} & ${accColor} ${accHex}), razor-sharp focal point, high contrast visible at 320×180 px on mobile feeds.
+
+STYLE & QUALITY:
+16:9 widescreen composition, masterwork commercial graphic design, 8K cinematic lighting, professional YouTube thumbnail artwork."`;
+
+      case 'general':
+      default:
+        return `${warningsHeader}A professional, high-CTR 16:9 YouTube thumbnail for ${catTitle}. Visual scene: ${cleanedScene}. Full frame visual composition, entire frame filled with rich layered scene, no reserved text zones, strictly no text or watermark, single dominant focal point centered or at golden ratio, vibrant ${domColor} (${domHex}) and ${accColor} (${accHex}) lighting, 16:9 widescreen, 8K resolution.`;
+    }
+  }
+
+  // PROMPT A: WITH TEXT ZONE (For Canva / Editor Overlay)
   // Determine placement description according to POS code
   const posCode = textPosition || 'POS-AUTO';
   let placementDescGoogle = 'Upper-left quadrant (rule-of-thirds text zone). The bottom-right quadrant must remain completely free of text or logos to accommodate YouTube\'s video duration timestamp.';
@@ -1334,46 +1600,41 @@ export function generateComprehensiveThumbnailPlatformPrompt(params: {
     placementDescGeneral = 'across the minimalist open canvas as the heroic focal element [POS-F]';
   }
 
-  const warningsHeader = (warnings && warnings.length > 0)
-    ? `[NOTES: ${warnings.join(' | ')}]\n\n`
-    : '';
-
   switch (platform) {
     case 'google-flow':
-      return `${warningsHeader}[GOOGLE FLOW / IMAGEN 3 — YOUTUBE THUMBNAIL 16:9]
+      return `${warningsHeader}[GOOGLE FLOW / IMAGEN 3 — YOUTUBE THUMBNAIL 16:9 — PROMPT A (DENGAN ZONA TEKS)]
 Prompt:
 A high-CTR YouTube thumbnail in 16:9 aspect ratio for ${catTitle}, ${cleanedScene}.
 
-Integrated Text & Graphic Overlay (Render Directly on Image):
-- Headline Text: "${overlayText}"
-- Typography Style: Giant, ultra-bold modern sans-serif typography, clean uppercase lettering with high edge contrast and subtle dark drop shadow for maximum 320x180px mobile legibility.
-- Placement: ${placementDescGoogle}
-- Color Harmony: High-luminance crisp white lettering with ${accColor} (${accHex}) accents against ${domColor} (${domHex}) background tones and ${zoneHex} text zone.
-- Mobile CTR Rule: Tested and guaranteed for 0.3-second glance comprehension on smartphone screens.
+Text Safe Zone & Layout (Untuk Overlay di Canva / Editor):
+- Reserved Safe Zone: ${placementDescGoogle}
+- Target Typography: Ultra-bold modern sans-serif typography (Rekomendasi: "${overlayText}").
+- Color Harmony: White lettering with ${accColor} (${accHex}) accents against ${domColor} (${domHex}) background tones and ${zoneHex} flat text zone.
+- Mobile CTR Rule: 25-40% of frame kept clean/flat to guarantee 0.3-second glance comprehension on smartphone screens.
 
 Technical Specifications:
 - Aspect Ratio: 16:9 widescreen (1792×1024 px)
 - Lighting & Texture: High dynamic contrast, sharp focal point, strong color blocking, uncluttered negative space
-- Quality: 8K resolution, cinematic lighting, professional YouTube thumbnail design, no blurry artifacts, no garbled spelling`;
+- Quality: 8K resolution, cinematic lighting, professional YouTube thumbnail design, no watermark, no text in raw render`;
 
     case 'chatgpt':
-      return `${warningsHeader}[CHATGPT / DALL-E 3 PROMPT]
-"Generate a professional, high-CTR YouTube thumbnail in 16:9 aspect ratio for a ${catTitle} music track.
+      return `${warningsHeader}[CHATGPT / DALL-E 3 PROMPT — PROMPT A (DENGAN ZONA TEKS)]
+"Generate a professional, high-CTR YouTube thumbnail base in 16:9 aspect ratio for a ${catTitle} music track.
 
-VISUAL SCENE & SETTING:
+VISUAL SCENE & TEXT ZONE COMPOSITION:
 ${cleanedScene}
 
-INTEGRATED TEXT OVERLAY (MUST BE RENDERED DIRECTLY ON THE IMAGE):
-1. Exact Text: "${overlayText}"
-2. Position: ${placementDescGpt}
-3. Font & Appearance: Massive, ultra-bold modern sans-serif editorial typography. Ensure extreme edge contrast (high-luminance white letters with crisp subtle outer drop-shadow against ${zoneHex} zone) so it is instantly readable at 320×180 px on mobile feeds.
-4. YouTube Safe Zone: Keep the bottom-right corner completely clear of any text or critical visual elements so it is not obscured by the YouTube duration badge (${durStamp}).
+CANVA / THUMBNAIL EDITOR TEXT SAFE ZONE:
+1. Text Safe Zone: Reserved clean area ${placementDescGpt}
+2. Intended Overlay: Designed for bold typography overlay in external editor (e.g., "${overlayText}"). Keep this 25-40% zone flat and low in detail.
+3. YouTube Safe Zone: Keep the bottom-right corner completely clear so it is not obscured by the YouTube duration badge (${durStamp}).
+4. Raw Output: Do not bake text into image; leave clean negative space with high edge contrast for external typography.
 
 STYLE & COMPOSITION:
 16:9 widescreen composition, strong color blocking (${domColor} ${domHex} & ${accColor} ${accHex}), razor-sharp focal point, masterwork commercial graphic design."`;
 
     case 'general':
     default:
-      return `${warningsHeader}A professional, high-CTR 16:9 YouTube thumbnail for ${catTitle}. Visual scene: ${cleanedScene}. Prominently featuring bold integrated text headline: "${overlayText}" in massive, ultra-clear high-contrast typography ${placementDescGeneral}, optimized for instant mobile readability (0.3-second glance rule). Bottom-right corner kept clean and free of text for video duration badge. Masterwork, vibrant ${domColor} (${domHex}) and ${accColor} (${accHex}) lighting, 16:9 widescreen, 8K resolution.`;
+      return `${warningsHeader}A professional, high-CTR 16:9 YouTube thumbnail base for ${catTitle}. Visual scene: ${cleanedScene}. Features a dedicated 25–40% clean text safe zone ${placementDescGeneral} designed for high-contrast headline overlay in Canva/Photoshop (Recommended text: "${overlayText}"). Bottom-right corner kept clean for video duration badge. Masterwork, vibrant ${domColor} (${domHex}) and ${accColor} (${accHex}) lighting, 16:9 widescreen, 8K resolution.`;
   }
 }

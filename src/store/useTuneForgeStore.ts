@@ -121,8 +121,8 @@ const getStoredSession = (): { user: User | null; isLoggedIn: boolean } => {
         return { user: parsed, isLoggedIn: true };
       }
     }
-  } catch (err) {
-    console.error('Failed to parse stored session:', err);
+  } catch {
+    // Sesi gagal dibaca, gunakan guest state default
   }
   return { user: null, isLoggedIn: false };
 };
@@ -468,8 +468,8 @@ export const useTuneForgeStore = create<TuneForgeState>((set, get) => ({
           }
         }
       }
-    } catch (err) {
-      console.warn('Failed to fetch isolated packages:', err);
+    } catch {
+      // Abaikan jika fetch paket offline
     }
   },
   currentPackage: null,
@@ -495,11 +495,16 @@ export const useTuneForgeStore = create<TuneForgeState>((set, get) => ({
   },
 
   forgeNewPackage: async () => {
+    // 2A Debounce/Lock: Hanya satu request yang diproses saat isGenerating
+    if (get().isGenerating) {
+      return get().currentPackage?.id || null;
+    }
+
     set({ isGenerating: true, generationStepMessage: 'Menganalisis search intent penonton YouTube...' });
 
     const state = get();
     const cat = state.categories.find((c) => c.id === state.selectedCategoryId) || state.categories[0];
-    const rawKw = (state.optionalKeyword || '').replace(/</g, '').replace(/>/g, '').trim();
+    const rawKw = (state.optionalKeyword || '').replace(/<[^>]*>?/gm, '').replace(/[<>{}[\]\\]/g, '').trim().slice(0, 100);
     const cleanKw = translateKeywordToEnglish(rawKw) || (rawKw ? rawKw : 'Midnight Session');
     const cleanDuration = translateDurationToEnglish(state.duration);
     const cleanUseCase = translateUseCaseToEnglish(state.useCase);
@@ -519,10 +524,17 @@ export const useTuneForgeStore = create<TuneForgeState>((set, get) => ({
       }
     }, 750);
 
+    // 2A Timeout 30 detik untuk panggilan API
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => {
+      controller.abort();
+    }, 30000);
+
     try {
       const response = await fetch('/api/forge', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        signal: controller.signal,
         body: JSON.stringify({
           categoryId: cat.id,
           categoryName: cat.name,
@@ -536,6 +548,7 @@ export const useTuneForgeStore = create<TuneForgeState>((set, get) => ({
         })
       });
 
+      clearTimeout(timeoutId);
       clearInterval(stepInterval);
 
       if (response.ok) {
@@ -547,9 +560,18 @@ export const useTuneForgeStore = create<TuneForgeState>((set, get) => ({
           generationStepMessage: ''
         }));
         return newPkg.id;
+      } else if (response.status === 429) {
+        state.showToast('Batas kuota API AI tercapai sementara. Mengaktifkan mesin kompilasi lokal...');
+      } else {
+        const errJson = await response.json().catch(() => ({}));
+        state.showToast(errJson.error || 'Server sibuk. Menggunakan mesin kompilasi lokal...');
       }
-    } catch (err) {
-      console.warn('Network call to /api/forge failed, using client fallback:', err);
+    } catch (err: any) {
+      clearTimeout(timeoutId);
+      clearInterval(stepInterval);
+      if (err?.name === 'AbortError') {
+        state.showToast('Proses terlalu lama (>30 detik). Dialihkan ke generator cepat lokal.');
+      }
     }
 
     clearInterval(stepInterval);
@@ -677,12 +699,20 @@ export const useTuneForgeStore = create<TuneForgeState>((set, get) => ({
     const currentPkg = state.currentPackage;
     if (!currentPkg) return false;
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => {
+      controller.abort();
+    }, 30000);
+
     try {
       const response = await fetch('/api/regenerate-block', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        signal: controller.signal,
         body: JSON.stringify({ blockName, currentPackage: currentPkg })
       });
+
+      clearTimeout(timeoutId);
 
       if (response.ok) {
         const { updatedData, model } = await response.json();
@@ -720,8 +750,11 @@ export const useTuneForgeStore = create<TuneForgeState>((set, get) => ({
         state.showToast(`${blockName} berhasil diperbarui via ${model}`);
         return true;
       }
-    } catch (err) {
-      console.warn('API call failed for regenerate block:', err);
+    } catch (err: any) {
+      clearTimeout(timeoutId);
+      if (err?.name === 'AbortError') {
+        state.showToast('Proses terlalu lama (>30 detik). Menggunakan generator cepat...');
+      }
     }
 
     // Client-side fallback regeneration

@@ -64,8 +64,8 @@ export function usePWAInstall() {
         setDeferredPrompt(null);
         return true;
       }
-    } catch (err) {
-      console.error('Install prompt error:', err);
+    } catch {
+      // User cancelled or platform prevented install prompt
     }
     return false;
   };

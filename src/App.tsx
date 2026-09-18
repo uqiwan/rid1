@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { Wand2 } from 'lucide-react';
 import { useTuneForgeStore } from './store/useTuneForgeStore';
 import { Header } from './components/layout/Header';
 import { Footer } from './components/layout/Footer';
@@ -165,22 +164,6 @@ export default function App() {
           </main>
           <Footer />
         </div>
-      )}
-
-      {/* Floating "Forge Paket Baru" Button — Selalu terlihat di semua kondisi scroll */}
-      {isLoggedIn && currentRoute !== '/generate' && (
-        <aside aria-label="Aksi Cepat Forge" className="fixed bottom-6 right-6 z-40 print:hidden">
-          <button
-            type="button"
-            id="btn-floating-forge-new"
-            onClick={() => navigate('/generate')}
-            className="group inline-flex items-center gap-2 px-5 py-3 rounded-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs sm:text-sm shadow-xl shadow-amber-500/25 hover:shadow-2xl hover:shadow-amber-500/35 transition-all hover:-translate-y-0.5 active:scale-95 cursor-pointer border border-amber-400/60"
-            title="Forge Paket Baru"
-          >
-            <Wand2 className="w-4 h-4 transition-transform group-hover:rotate-12" />
-            <span>Forge Paket Baru</span>
-          </button>
-        </aside>
       )}
     </div>
   );

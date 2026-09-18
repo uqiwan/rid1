@@ -68,70 +68,12 @@ export interface ContentPackage {
     minimal: string;
     lifestyle: string;
   };
-  preferredThumbnailStyle?: 'all' | 'cinematic' | 'split' | 'minimal' | 'lifestyle';
-  thumbnailDetails?: Record<'cinematic' | 'split' | 'minimal' | 'lifestyle', {
-    styleName: string;
-    styleKey: 'cinematic' | 'split' | 'minimal' | 'lifestyle';
-    aspectRatio: string;
-    targetCTR: string;
-    fullPrompt: string;
-    renderPrompt?: string;
-    formattedBlock?: string;
-    categoryTitle?: string;
-    styleTitle?: string;
-    ctrStrategy?: string;
-    rawPrompt?: string;
-    recommendedText?: {
-      option1: string;
-      option2: string;
-      option3: string;
-      bestOption: string;
-      bestReason: string;
-    };
-    compositionGuide?: {
-      focalPoint: string;
-      textZone: string;
-      keyContrast: string;
-    };
-    ctrPalette?: {
-      dominant: { name: string; hex: string };
-      accent: { name: string; hex: string };
-      textZone: { type: string; hex: string };
-    };
-    antiPatterns?: string[];
-    technicalSpecs?: {
-      aspectRatio: string;
-      generateResolution: string;
-      testResolution: string;
-      platforms: string;
-    };
-    platformPrompts?: {
-      standard: string;
-      midjourney: string;
-      dalle3: string;
-      stableDiffusion: {
-        positive: string;
-        negative: string;
-        cfgScale: number;
-        sampler: string;
-        steps: number;
-      };
-    };
-    layers: {
-      background: string;
-      mainSubject: string;
-      foreground: string;
-      textOverlay: string;
-    };
-    clickTriggerReason: string;
-    visualRules: {
-      contrastPair: string;
-      focusDepth: string;
-      lighting: string;
-      emotion: string;
-      palette?: string;
-    };
+  thumbnailPromptsDual?: Record<'cinematic' | 'split' | 'minimal' | 'lifestyle', {
+    promptA: string;
+    promptB: string;
   }>;
+  preferredThumbnailStyle?: 'all' | 'cinematic' | 'split' | 'minimal' | 'lifestyle';
+  thumbnailDetails?: Record<'cinematic' | 'split' | 'minimal' | 'lifestyle', ThumbnailPromptDetail>;
   googleFlowDetails?: {
     compositionTitle?: string;
     imagePrompt: string;
@@ -246,4 +188,83 @@ export interface AuditLog {
   entity: string;
   details: string;
   timestamp: string;
+}
+
+export interface ThumbnailPromptDetail {
+  styleName: string;
+  styleKey: 'cinematic' | 'split' | 'minimal' | 'lifestyle';
+  aspectRatio: string;
+  targetCTR: string;
+  fullPrompt: string; // The complete boxed ASCII dual output format (v1.1)
+  renderPrompt?: string;
+  promptA: string; // Prompt Versi A (dengan zona teks untuk Canva/Editor)
+  promptB: string; // Prompt Versi B (full frame visual penuh tanpa zona teks)
+  modifierA: string;
+  modifierB: string;
+  formattedBlock: string;
+  categoryTitle?: string;
+  styleTitle?: string;
+  ctrStrategy?: string;
+  rawPrompt: string;
+  categorySpecialNote?: string;
+  recommendedText?: {
+    option1: string;
+    option2: string;
+    option3: string;
+    bestOption: 'OPSI 1' | 'OPSI 2' | 'OPSI 3';
+    bestReason: string;
+  };
+  compositionGuide?: {
+    focalPoint: string;
+    textZone: string;
+    keyContrast: string;
+    versionB?: {
+      focalPoint: string;
+      fullFrame: string;
+    };
+  };
+  ctrPalette?: {
+    dominant: { name: string; hex: string };
+    accent: { name: string; hex: string };
+    textZone: { type: string; hex: string };
+  };
+  antiPatterns?: string[];
+  technicalSpecs?: {
+    aspectRatio: string;
+    generateResolution: string;
+    testResolution: string;
+    platforms: string;
+  };
+  platformPrompts?: {
+    standard: string;
+    standardA?: string;
+    standardB?: string;
+    midjourney: string;
+    midjourneyA?: string;
+    midjourneyB?: string;
+    dalle3: string;
+    dalle3A?: string;
+    dalle3B?: string;
+    stableDiffusion: {
+      positive: string;
+      negative: string;
+      cfgScale: number;
+      sampler: string;
+      steps: number;
+    };
+  };
+  layers?: {
+    background: string;
+    mainSubject: string;
+    foreground: string;
+    textOverlay: string;
+  };
+  clickTriggerReason?: string;
+  visualRules?: {
+    contrastPair: string;
+    focusDepth: string;
+    lighting: string;
+    emotion: string;
+    palette?: string;
+  };
 }
