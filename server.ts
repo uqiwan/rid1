@@ -24,7 +24,7 @@ app.get('/api/health', (req: Request, res: Response) => {
     phase: 'Fase 2',
     timestamp: new Date().toISOString(),
     aiReady: hasGeminiKey,
-    model: hasGeminiKey ? 'gemini-3.8-flash (Fallback: gemini-3.7-flash)' : 'TuneForge Algorithmic Engine',
+    model: hasGeminiKey ? 'gemini-3.8-flash (Fallback: gemini-3.1-flash-lite)' : 'TuneForge Algorithmic Engine',
     uptime: process.uptime()
   });
 });
@@ -74,7 +74,9 @@ app.post('/api/regenerate-block', async (req: Request, res: Response) => {
 app.get('/api/packages', (req: Request, res: Response) => {
   const search = typeof req.query.search === 'string' ? req.query.search : undefined;
   const categoryId = typeof req.query.categoryId === 'string' ? req.query.categoryId : undefined;
-  const packages = dbRepository.getPackages(search, categoryId);
+  const userId = typeof req.query.userId === 'string' ? req.query.userId : undefined;
+  const role = typeof req.query.role === 'string' ? req.query.role : undefined;
+  const packages = dbRepository.getPackages(search, categoryId, userId, role);
   res.json({ packages, total: packages.length });
 });
 
@@ -176,18 +178,40 @@ app.delete('/api/templates/:id', (req: Request, res: Response) => {
 
 // Users Management & Google Auth
 app.post('/api/auth/google', (req: Request, res: Response) => {
-  const { email, name, avatarUrl, role, googleSub } = req.body;
-  if (!email) {
-    return res.status(400).json({ error: 'Email Google wajib disertakan.' });
+  const { email, name, avatarUrl, creatorPassword, googleSub } = req.body;
+  if (!email || typeof email !== 'string' || !email.includes('@')) {
+    return res.status(400).json({ error: 'Email Google yang valid wajib disertakan.' });
   }
+
+  const cleanEmail = email.trim().toLowerCase();
+  const isAdmin = cleanEmail === 'uqiwan@gmail.com';
+
+  // Strict Rule from User:
+  // "hanya akun yang sudah ditentukan (uqiwan@gmail.com) sebagai admin yang bisa masuk sebagai admin,
+  // lainnya hanya boleh masuk sebagai kreator saja. kata sandi bersifat rahasia."
+  const EXPECTED_CREATOR_PASSWORD = process.env.CREATOR_ACCESS_PASSWORD || '1234567';
+  if (!isAdmin) {
+    if (!creatorPassword || creatorPassword.trim() !== EXPECTED_CREATOR_PASSWORD) {
+      return res.status(401).json({
+        error: 'Kata sandi akses kreator salah! Silakan masukkan kata sandi akses resmi yang valid.'
+      });
+    }
+  }
+
   const user = dbRepository.upsertUser({
-    email,
-    name: name || email.split('@')[0],
+    email: cleanEmail,
+    name: name?.trim() || (isAdmin ? 'Uqiwan Admin' : cleanEmail.split('@')[0]),
     avatarUrl,
-    role: role || 'admin',
+    role: isAdmin ? 'admin' : 'user',
     googleSub
   });
-  res.json(user);
+
+  res.json({
+    user,
+    message: isAdmin
+      ? 'Selamat datang kembali, Super Admin (uqiwan@gmail.com)!'
+      : 'Berhasil mendaftar dan masuk sebagai Kreator YouTube!'
+  });
 });
 
 app.get('/api/users', (req: Request, res: Response) => {
@@ -199,9 +223,22 @@ app.put('/api/users/:id/role', (req: Request, res: Response) => {
   if (role !== 'user' && role !== 'admin') {
     return res.status(400).json({ error: 'Role harus "user" atau "admin"' });
   }
+
+  const targetUser = dbRepository.getUserById(req.params.id);
+  if (!targetUser) {
+    return res.status(404).json({ error: 'User tidak ditemukan' });
+  }
+
+  // Strict rule: only uqiwan@gmail.com can ever hold admin role
+  if (role === 'admin' && targetUser.email.toLowerCase() !== 'uqiwan@gmail.com') {
+    return res.status(403).json({
+      error: 'Hanya akun uqiwan@gmail.com yang diizinkan memiliki peran Super Admin.'
+    });
+  }
+
   const updated = dbRepository.updateUserRole(req.params.id, role);
   if (!updated) {
-    return res.status(404).json({ error: 'User tidak ditemukan' });
+    return res.status(400).json({ error: 'Gagal memperbarui peran pengguna' });
   }
   res.json(updated);
 });
@@ -218,7 +255,9 @@ app.get('/api/stats', (req: Request, res: Response) => {
 
 // Export Packages
 app.get('/api/packages/export/json', (req: Request, res: Response) => {
-  const packages = dbRepository.getPackages();
+  const userId = typeof req.query.userId === 'string' ? req.query.userId : undefined;
+  const role = typeof req.query.role === 'string' ? req.query.role : undefined;
+  const packages = dbRepository.getPackages(undefined, undefined, userId, role);
   res.setHeader('Content-Type', 'application/json');
   res.setHeader('Content-Disposition', 'attachment; filename="tuneforge-packages-export.json"');
   res.json({

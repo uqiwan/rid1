@@ -1,11 +1,16 @@
+import fs from 'fs';
+import path from 'path';
 import { CATEGORIES_DATA, SAMPLE_LOFI_PACKAGE } from '../src/data/categories';
 import { Category, ContentPackage, PromptTemplate, AuditLog, User } from '../src/types';
 
 /**
  * In-Memory & Persistent Storage Repository
  * Provides fast query and state management for TuneForge backend
- * Strictly follows Drizzle Schema contract
+ * Strictly follows Drizzle Schema contract with JSON-file persistence fallback
  */
+
+const DATA_DIR = path.join(process.cwd(), 'data');
+const DB_FILE = path.join(DATA_DIR, 'tuneforge_storage.json');
 
 // Initial templates
 const INITIAL_TEMPLATES: PromptTemplate[] = [
@@ -48,9 +53,59 @@ class DbRepository {
   private users: User[] = [];
   private auditLogs: AuditLog[] = [];
 
-  // Packages
-  public getPackages(search?: string, categoryId?: string): ContentPackage[] {
+  constructor() {
+    this.loadFromDisk();
+  }
+
+  private saveToDisk() {
+    try {
+      if (!fs.existsSync(DATA_DIR)) {
+        fs.mkdirSync(DATA_DIR, { recursive: true });
+      }
+      const dump = {
+        categories: this.categories,
+        packages: this.packages,
+        templates: this.templates,
+        users: this.users,
+        auditLogs: this.auditLogs.slice(0, 100)
+      };
+      fs.writeFileSync(DB_FILE, JSON.stringify(dump, null, 2), 'utf-8');
+    } catch (err) {
+      console.warn('Failed to save database to disk:', err);
+    }
+  }
+
+  private loadFromDisk() {
+    try {
+      if (fs.existsSync(DB_FILE)) {
+        const raw = fs.readFileSync(DB_FILE, 'utf-8');
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed.packages)) this.packages = parsed.packages;
+        if (Array.isArray(parsed.users)) this.users = parsed.users;
+        if (Array.isArray(parsed.categories) && parsed.categories.length > 0) this.categories = parsed.categories;
+        if (Array.isArray(parsed.templates) && parsed.templates.length > 0) this.templates = parsed.templates;
+        if (Array.isArray(parsed.auditLogs)) this.auditLogs = parsed.auditLogs;
+      }
+    } catch (err) {
+      console.warn('Failed to read database from disk, using defaults:', err);
+    }
+  }
+
+  // Packages with user data isolation
+  public getPackages(search?: string, categoryId?: string, userId?: string, role?: string): ContentPackage[] {
     let result = [...this.packages];
+
+    // Data isolation: non-admin can only see their own packages
+    if (role !== 'admin') {
+      if (userId) {
+        result = result.filter((p) => p.userId === userId);
+      } else {
+        return [];
+      }
+    } else if (userId && userId !== 'all') {
+      result = result.filter((p) => p.userId === userId);
+    }
+
     if (categoryId && categoryId !== 'all') {
       result = result.filter((p) => p.categoryId === categoryId);
     }
@@ -79,6 +134,7 @@ class DbRepository {
       entity: 'ContentPackage',
       details: `Membuat paket konten baru: "${pkg.metadata.titleA.slice(0, 50)}..." [${pkg.categoryName}]`
     });
+    this.saveToDisk();
     return pkg;
   }
 
@@ -92,6 +148,7 @@ class DbRepository {
       entity: 'ContentPackage',
       details: `Menghapus paket ID ${id} (${target.metadata.titleA.slice(0, 40)}...)`
     });
+    this.saveToDisk();
     return true;
   }
 
@@ -116,6 +173,7 @@ class DbRepository {
       entity: 'Category',
       details: `Menambahkan kategori baru: "${newCat.name}" (${newCat.iconEmoji})`
     });
+    this.saveToDisk();
     return newCat;
   }
 
@@ -129,6 +187,7 @@ class DbRepository {
       entity: 'Category',
       details: `Memperbarui kategori: "${this.categories[index].name}"`
     });
+    this.saveToDisk();
     return this.categories[index];
   }
 
@@ -142,6 +201,7 @@ class DbRepository {
       entity: 'Category',
       details: `Menghapus kategori "${target.name}" dari Knowledge Base`
     });
+    this.saveToDisk();
     return true;
   }
 
@@ -162,6 +222,7 @@ class DbRepository {
       entity: 'PromptTemplate',
       details: `Menambahkan prompt template baru: "${newTmpl.style}"`
     });
+    this.saveToDisk();
     return newTmpl;
   }
 
@@ -175,6 +236,7 @@ class DbRepository {
       entity: 'PromptTemplate',
       details: `Memperbarui formula prompt template: "${this.templates[index].style}"`
     });
+    this.saveToDisk();
     return this.templates[index];
   }
 
@@ -188,6 +250,7 @@ class DbRepository {
       entity: 'PromptTemplate',
       details: `Menghapus prompt template "${target.style}"`
     });
+    this.saveToDisk();
     return true;
   }
 
@@ -207,22 +270,27 @@ class DbRepository {
     role?: 'user' | 'admin';
     googleSub?: string;
   }): User {
-    const existing = this.users.find((u) => u.email.toLowerCase() === userData.email.toLowerCase());
+    const cleanEmail = userData.email.toLowerCase().trim();
+    const isOwnerAdmin = cleanEmail === 'uqiwan@gmail.com';
+    const assignedRole: 'user' | 'admin' = isOwnerAdmin ? 'admin' : 'user';
+
+    const existing = this.users.find((u) => u.email.toLowerCase() === cleanEmail);
     if (existing) {
       existing.lastLoginAt = new Date().toISOString();
       if (userData.name) existing.name = userData.name;
       if (userData.avatarUrl) existing.avatarUrl = userData.avatarUrl;
-      if (userData.role) existing.role = userData.role;
+      existing.role = assignedRole;
+      this.saveToDisk();
       return existing;
     }
 
     const newUser: User = {
-      id: `usr-${Date.now()}`,
+      id: `usr-${cleanEmail.replace(/[^a-z0-9]/g, '_')}`,
       googleSub: userData.googleSub || `google-sub-${Math.floor(100000000000000000 + Math.random() * 900000000000000000)}`,
-      email: userData.email,
-      name: userData.name,
-      avatarUrl: userData.avatarUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(userData.name)}&backgroundColor=f59e0b`,
-      role: userData.role || (this.users.length === 0 ? 'admin' : 'user'),
+      email: cleanEmail,
+      name: userData.name || cleanEmail.split('@')[0],
+      avatarUrl: userData.avatarUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(userData.name || cleanEmail)}&backgroundColor=f59e0b`,
+      role: assignedRole,
       createdAt: new Date().toISOString(),
       lastLoginAt: new Date().toISOString()
     };
@@ -232,15 +300,22 @@ class DbRepository {
       adminEmail: newUser.email,
       action: 'USER_REGISTER',
       entity: 'User',
-      details: `Pengguna terdaftar via Google OAuth: ${newUser.name} (${newUser.email})`
+      details: `Pengguna terdaftar via Akun Google: ${newUser.name} (${newUser.email}) — Peran: ${newUser.role.toUpperCase()}`
     });
 
+    this.saveToDisk();
     return newUser;
   }
 
   public updateUserRole(id: string, role: 'user' | 'admin', adminEmail = 'uqiwan@gmail.com'): User | null {
     const index = this.users.findIndex((u) => u.id === id);
     if (index === -1) return null;
+
+    // Strict rule: Only uqiwan@gmail.com can ever have admin role
+    if (role === 'admin' && this.users[index].email.toLowerCase() !== 'uqiwan@gmail.com') {
+      return null;
+    }
+
     const oldRole = this.users[index].role;
     this.users[index].role = role;
     this.addAuditLog({
@@ -249,6 +324,7 @@ class DbRepository {
       entity: 'User',
       details: `Mengubah peran pengguna ${this.users[index].name} (${this.users[index].email}) dari ${oldRole.toUpperCase()} menjadi ${role.toUpperCase()}`
     });
+    this.saveToDisk();
     return this.users[index];
   }
 

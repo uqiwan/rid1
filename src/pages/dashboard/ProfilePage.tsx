@@ -85,45 +85,29 @@ export const ProfilePage: React.FC = () => {
           </div>
         </div>
 
-        {/* Role Switching Simulator for Testing */}
-        <div className="p-4 bg-amber-50/60 rounded-xl border border-amber-200/80 space-y-3">
-          <div className="flex items-center gap-2 text-amber-900 font-semibold text-xs">
-            <Key className="w-4 h-4 text-amber-600" />
-            <span>Pengujian Hak Akses (Fase 1 Demo)</span>
+        {/* Role Security Information */}
+        <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 text-xs space-y-2">
+          <div className="flex items-center gap-2 text-slate-900 font-semibold">
+            <Shield className="w-4 h-4 text-amber-600" />
+            <span>Hak Akses &amp; Keamanan Akun</span>
           </div>
-          <p className="text-[11px] text-amber-800 leading-relaxed">
-            Anda dapat beralih antara peran <strong>Kreator</strong> dan <strong>Super Admin</strong> kapan saja untuk meninjau halaman publik, dashboard pengguna, maupun menu admin (/admin/*).
-          </p>
-          <div className="flex items-center gap-3 pt-1">
-            <button
-              onClick={() => setUserRole('user')}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-all ${
-                currentUser?.role === 'user'
-                  ? 'bg-slate-900 text-white shadow-xs'
-                  : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-100'
-              }`}
-            >
-              Mode Kreator
-            </button>
-            <button
-              onClick={() => setUserRole('admin')}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-all ${
-                currentUser?.role === 'admin'
-                  ? 'bg-amber-600 text-white shadow-xs'
-                  : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-100'
-              }`}
-            >
-              Mode Super Admin
-            </button>
-          </div>
+          {currentUser?.email?.toLowerCase() === 'uqiwan@gmail.com' ? (
+            <p className="text-[11px] text-slate-600 leading-relaxed">
+              👑 Akun <strong>uqiwan@gmail.com</strong> adalah <strong>Pemilik Aplikasi &amp; Super Admin</strong>. Anda memiliki wewenang penuh untuk mengakses Area Admin (/admin/*), mengelola database, dan meninjau seluruh riwayat sistem.
+            </p>
+          ) : (
+            <p className="text-[11px] text-slate-600 leading-relaxed">
+              🎨 Akun Anda terdaftar sebagai <strong>Kreator YouTube</strong>. Seluruh riwayat paket konten yang Anda buat disimpan secara terisolasi dan hanya dapat diakses melalui akun Google Anda. Sesuai kebijakan sistem, akses Super Admin dikhususkan bagi pemilik aplikasi (<em>uqiwan@gmail.com</em>).
+            </p>
+          )}
         </div>
 
         {/* Logout Action */}
         <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
-          <span className="text-xs text-slate-400">Sesi aktif tersimpan secara lokal</span>
+          <span className="text-xs text-slate-400">Sesi Google OAuth aktif</span>
           <button
             onClick={logout}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold text-red-600 hover:bg-red-50 transition-colors cursor-pointer border border-red-200"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer border border-rose-200"
           >
             <LogOut className="w-3.5 h-3.5" />
             <span>Keluar Akun Google</span>

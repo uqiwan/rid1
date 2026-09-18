@@ -35,6 +35,9 @@ export interface ContentPackage {
   duration?: string;
   useCase?: string;
   optionalKeyword?: string;
+  textPosition?: string;
+  colorPalette?: string;
+  customColors?: { dominant: string; accent?: string; textZone?: string };
   createdAt: string;
   generationMs: number;
   model: string;
@@ -73,6 +76,47 @@ export interface ContentPackage {
     targetCTR: string;
     fullPrompt: string;
     renderPrompt?: string;
+    formattedBlock?: string;
+    categoryTitle?: string;
+    styleTitle?: string;
+    ctrStrategy?: string;
+    rawPrompt?: string;
+    recommendedText?: {
+      option1: string;
+      option2: string;
+      option3: string;
+      bestOption: string;
+      bestReason: string;
+    };
+    compositionGuide?: {
+      focalPoint: string;
+      textZone: string;
+      keyContrast: string;
+    };
+    ctrPalette?: {
+      dominant: { name: string; hex: string };
+      accent: { name: string; hex: string };
+      textZone: { type: string; hex: string };
+    };
+    antiPatterns?: string[];
+    technicalSpecs?: {
+      aspectRatio: string;
+      generateResolution: string;
+      testResolution: string;
+      platforms: string;
+    };
+    platformPrompts?: {
+      standard: string;
+      midjourney: string;
+      dalle3: string;
+      stableDiffusion: {
+        positive: string;
+        negative: string;
+        cfgScale: number;
+        sampler: string;
+        steps: number;
+      };
+    };
     layers: {
       background: string;
       mainSubject: string;
@@ -110,9 +154,66 @@ export interface ContentPackage {
     };
     variationIndex?: number;
   };
+  cinematicVisualBundle?: CinematicVisualBundle;
   imagePrompts: string[];
   videoPrompt: string;
   technicalNotes: string;
+}
+
+export type CinematicVariantType = 'Scene' | 'Subjek' | 'Abstrak';
+
+export interface CinematicPlatformPrompts {
+  image: {
+    googleFlow: string;
+    midjourney: string;
+    dalle3: string;
+    flux?: string;
+    imagen?: string;
+    stableDiffusion: {
+      positive: string;
+      negative: string;
+      cfgScale: number;
+      sampler: string;
+      steps: number;
+    };
+  };
+  video: {
+    googleFlow: string;
+    runwayMl: string;
+    klingAi: string;
+    pikaLabs: string;
+    lumaDreamMachine: string;
+  };
+}
+
+export interface CinematicPromptVariant {
+  variantType: CinematicVariantType;
+  variantTitle: string;
+  categoryTitle: string;
+  imagePrompt: string;
+  videoPrompt: string;
+  negativePrompt: string;
+  parameters?: {
+    audience: string;
+    lighting: string;
+    colorPalette: string;
+    mood: string;
+    styleReference: string;
+  };
+  technicalSpecs: {
+    resolution: string;
+    aspectRatio: string;
+    loopSeconds: number;
+  };
+  styleTags: string[];
+  formattedFullText: string;
+  platforms: CinematicPlatformPrompts;
+}
+
+export interface CinematicVisualBundle {
+  categoryName: string;
+  activeVariant: CinematicVariantType;
+  variants: Record<CinematicVariantType, CinematicPromptVariant>;
 }
 
 export interface User {

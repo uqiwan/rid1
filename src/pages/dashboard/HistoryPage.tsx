@@ -21,8 +21,14 @@ export const HistoryPage: React.FC = () => {
     setCurrentPackageById, 
     navigate,
     categories,
+    currentUser,
+    fetchPackages,
     showToast 
   } = useTuneForgeStore();
+
+  React.useEffect(() => {
+    fetchPackages();
+  }, [fetchPackages]);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState('all');
@@ -76,6 +82,23 @@ export const HistoryPage: React.FC = () => {
           <Wand2 className="w-3.5 h-3.5 text-amber-400" />
           <span>Forge Paket Baru</span>
         </button>
+      </div>
+
+      {/* User Account Scope Banner */}
+      <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+        <div className="flex items-center gap-2">
+          <div className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+          <span className="text-slate-600">
+            Riwayat untuk akun: <strong className="text-slate-900">{currentUser?.name}</strong> ({currentUser?.email})
+          </span>
+        </div>
+        <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold self-start sm:self-auto ${
+          currentUser?.role === 'admin'
+            ? 'bg-amber-100 text-amber-900 border border-amber-200'
+            : 'bg-blue-100 text-blue-900 border border-blue-200'
+        }`}>
+          {currentUser?.role === 'admin' ? '👑 Super Admin' : '🎨 Kreator YouTube'}
+        </span>
       </div>
 
       {/* Filter & Search Bar */}

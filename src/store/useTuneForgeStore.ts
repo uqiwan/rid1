@@ -1,14 +1,20 @@
 import { create } from 'zustand';
 import { CATEGORIES_DATA, INITIAL_HISTORY_PACKAGES, SAMPLE_LOFI_PACKAGE } from '../data/categories';
-import { Category, ContentPackage, User, PromptTemplate, AuditLog } from '../types';
+import { Category, ContentPackage, User, PromptTemplate, AuditLog, CinematicVariantType } from '../types';
 import { generateRefinedTitleVariants } from '../data/titleFormulaEngine';
 import { generateEngineeredThumbnailPrompts } from '../data/thumbnailPromptEngine';
 import { generateGoogleFlowPrompts } from '../data/googleFlowEngine';
+import { generateCinematicVisualBundle } from '../data/cinematicPromptEngine';
 import { 
   translateDurationToEnglish, 
   translateUseCaseToEnglish, 
   translateKeywordToEnglish 
 } from '../utils/languageTranslator';
+import { 
+  TextPositionCode, 
+  ColorPaletteCode, 
+  CustomColorInput 
+} from '../data/thumbnailSettingsEngine';
 
 interface SystemStats {
   totalCategories: number;
@@ -25,7 +31,7 @@ interface TuneForgeState {
   currentUser: User | null;
   isLoggedIn: boolean;
   setUserRole: (role: 'user' | 'admin') => void;
-  loginWithGoogle: (params?: { email?: string; name?: string; role?: 'user' | 'admin'; avatarUrl?: string }) => Promise<User>;
+  loginWithGoogle: (params?: { email?: string; name?: string; role?: 'user' | 'admin'; creatorPassword?: string; avatarUrl?: string }) => Promise<User>;
   login: () => void;
   logout: () => void;
 
@@ -67,6 +73,9 @@ interface TuneForgeState {
   duration: string; // opsional: "1 Hour", "3 Hours", etc.
   useCase: string; // opsional: "Study & Sleep", "Deep Focus & Work", etc.
   optionalKeyword: string;
+  selectedTextPosition: TextPositionCode;
+  selectedColorPalette: ColorPaletteCode;
+  customColors: CustomColorInput;
   isGenerating: boolean;
   generationStepMessage: string;
 
@@ -77,6 +86,10 @@ interface TuneForgeState {
   setDuration: (duration: string) => void;
   setUseCase: (useCase: string) => void;
   setOptionalKeyword: (keyword: string) => void;
+  setSelectedTextPosition: (pos: TextPositionCode) => void;
+  setSelectedColorPalette: (pal: ColorPaletteCode) => void;
+  setCustomColors: (colors: Partial<CustomColorInput>) => void;
+  resetThumbnailSettings: () => void;
   resetForm: () => void;
 
   // Packages & History
@@ -86,6 +99,7 @@ interface TuneForgeState {
   setCurrentPackageById: (id: string) => void;
   forgeNewPackage: () => Promise<string>;
   regenerateBlockInCurrentPackage: (blockName: string) => Promise<boolean>;
+  setCinematicVariant: (variant: CinematicVariantType) => void;
   deletePackage: (id: string) => Promise<void>;
 
   // AI Status
@@ -134,68 +148,55 @@ export const useTuneForgeStore = create<TuneForgeState>((set, get) => ({
     }
   },
 
-  loginWithGoogle: async (params?: { email?: string; name?: string; role?: 'user' | 'admin'; avatarUrl?: string }) => {
-    const role = params?.role || 'user';
-    const email = params?.email || (role === 'admin' ? 'uqiwan@gmail.com' : 'creator@tuneforge.ai');
-    const name = params?.name || (role === 'admin' ? 'Uqiwan Admin' : 'Kreator YouTube');
+  loginWithGoogle: async (params?: { email?: string; name?: string; creatorPassword?: string; avatarUrl?: string }) => {
+    const email = params?.email?.trim().toLowerCase() || '';
+    const name = params?.name?.trim() || '';
+    const creatorPassword = params?.creatorPassword?.trim() || '';
     const avatarUrl = params?.avatarUrl || '';
 
-    try {
-      const res = await fetch('/api/auth/google', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, name, role, avatarUrl })
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.user) {
-          try {
-            localStorage.setItem('tuneforge_session_user', JSON.stringify(data.user));
-          } catch {}
-          set({
-            currentUser: data.user,
-            isLoggedIn: true,
-            currentRoute: '/dashboard'
-          });
-          get().showToast(`Berhasil masuk sebagai ${data.user.name}`);
-          get().fetchUsers();
-          get().fetchStats();
-          return data.user;
-        }
-      }
-    } catch (err) {
-      console.warn('Network call to /api/auth/google failed, using client session:', err);
+    if (!email) {
+      throw new Error('Alamat email Google wajib diisi.');
     }
 
-    // Fallback if backend fetch is unreachable
-    const fallbackUser: User = {
-      id: `usr-${Date.now()}`,
-      googleSub: `google-sub-${Date.now()}`,
-      email,
-      name,
-      avatarUrl: avatarUrl || '',
-      role,
-      createdAt: new Date().toISOString(),
-      lastLoginAt: new Date().toISOString()
-    };
-    try {
-      localStorage.setItem('tuneforge_session_user', JSON.stringify(fallbackUser));
-    } catch {}
-    set({
-      currentUser: fallbackUser,
-      isLoggedIn: true,
-      currentRoute: '/dashboard'
+    const res = await fetch('/api/auth/google', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, name, creatorPassword, avatarUrl })
     });
-    get().showToast(`Berhasil masuk sebagai ${fallbackUser.name}`);
-    return fallbackUser;
+
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.error || 'Gagal melakukan verifikasi akun Google.');
+    }
+
+    if (data.user) {
+      try {
+        localStorage.setItem('tuneforge_session_user', JSON.stringify(data.user));
+      } catch {}
+      set({
+        currentUser: data.user,
+        isLoggedIn: true,
+        currentRoute: '/dashboard'
+      });
+      get().showToast(data.message || `Berhasil masuk sebagai ${data.user.name}`);
+      get().fetchPackages();
+      if (data.user.role === 'admin') {
+        get().fetchUsers();
+        get().fetchStats();
+      }
+      return data.user;
+    }
+
+    throw new Error('Respon server tidak valid.');
   },
 
   login: () => {
     const session = getStoredSession();
     if (session.user) {
       set({ currentUser: session.user, isLoggedIn: true, currentRoute: '/dashboard' });
+      get().fetchPackages();
     } else {
-      get().loginWithGoogle();
+      set({ currentRoute: '/login' });
     }
   },
 
@@ -206,6 +207,8 @@ export const useTuneForgeStore = create<TuneForgeState>((set, get) => ({
     set({
       currentUser: null,
       isLoggedIn: false,
+      packages: [],
+      currentPackage: null,
       currentRoute: '/login',
       routeParam: null
     });
@@ -384,6 +387,9 @@ export const useTuneForgeStore = create<TuneForgeState>((set, get) => ({
   duration: '1 Hour',
   useCase: 'Study & Work',
   optionalKeyword: '',
+  selectedTextPosition: 'POS-AUTO',
+  selectedColorPalette: 'PAL-AUTO',
+  customColors: { dominant: '#1A3A1A', accent: '#C9A030', textZone: '#0D1A0D' },
   isGenerating: false,
   generationStepMessage: '',
 
@@ -416,6 +422,14 @@ export const useTuneForgeStore = create<TuneForgeState>((set, get) => ({
   setDuration: (duration) => set({ duration }),
   setUseCase: (useCase) => set({ useCase }),
   setOptionalKeyword: (keyword) => set({ optionalKeyword: keyword.slice(0, 120) }),
+  setSelectedTextPosition: (pos) => set({ selectedTextPosition: pos }),
+  setSelectedColorPalette: (pal) => set({ selectedColorPalette: pal }),
+  setCustomColors: (colors) => set((s) => ({ customColors: { ...s.customColors, ...colors } })),
+  resetThumbnailSettings: () => set({
+    selectedTextPosition: 'POS-AUTO',
+    selectedColorPalette: 'PAL-AUTO',
+    customColors: { dominant: '#1A3A1A', accent: '#C9A030', textZone: '#0D1A0D' }
+  }),
 
   resetForm: () => {
     const firstCat = get().categories[0];
@@ -427,24 +441,38 @@ export const useTuneForgeStore = create<TuneForgeState>((set, get) => ({
       duration: '1 Hour',
       useCase: 'Study & Work',
       optionalKeyword: '',
+      selectedTextPosition: 'POS-AUTO',
+      selectedColorPalette: 'PAL-AUTO',
+      customColors: { dominant: '#1A3A1A', accent: '#C9A030', textZone: '#0D1A0D' },
       isGenerating: false,
       generationStepMessage: ''
     });
   },
 
-  packages: INITIAL_HISTORY_PACKAGES,
+  packages: [],
   fetchPackages: async () => {
+    const user = get().currentUser;
+    if (!user) {
+      set({ packages: [] });
+      return;
+    }
     try {
-      const res = await fetch('/api/packages');
+      const url = `/api/packages?userId=${encodeURIComponent(user.id)}&role=${encodeURIComponent(user.role)}`;
+      const res = await fetch(url);
       if (res.ok) {
         const data = await res.json();
         if (Array.isArray(data.packages)) {
           set({ packages: data.packages });
+          if (data.packages.length > 0 && !get().currentPackage) {
+            set({ currentPackage: data.packages[0] });
+          }
         }
       }
-    } catch {}
+    } catch (err) {
+      console.warn('Failed to fetch isolated packages:', err);
+    }
   },
-  currentPackage: SAMPLE_LOFI_PACKAGE,
+  currentPackage: null,
 
   aiEngineStatus: { ready: true, model: 'gemini-3.8-flash (Live AI Engine)' },
   checkAiHealth: async () => {
@@ -544,7 +572,10 @@ export const useTuneForgeStore = create<TuneForgeState>((set, get) => ({
       preferredStyle: state.selectedThumbnailStyle,
       duration: cleanDuration,
       useCase: cleanUseCase,
-      optionalKeyword: cleanKw
+      optionalKeyword: cleanKw,
+      textPosition: state.selectedTextPosition,
+      colorPalette: state.selectedColorPalette,
+      customColors: state.customColors
     });
 
     const fallbackFlow = generateGoogleFlowPrompts({
@@ -566,6 +597,9 @@ export const useTuneForgeStore = create<TuneForgeState>((set, get) => ({
       duration: state.duration,
       useCase: state.useCase,
       optionalKeyword: cleanKw,
+      textPosition: state.selectedTextPosition,
+      colorPalette: state.selectedColorPalette,
+      customColors: state.customColors,
       createdAt: new Date().toISOString(),
       generationMs: 3200,
       model: 'TuneForge Google Flow Engine (Client)',
@@ -595,6 +629,7 @@ export const useTuneForgeStore = create<TuneForgeState>((set, get) => ({
       introHook: `Welcome to this 1-hour session of ${state.selectedSubGenre}. Keep your focus uninterrupted, let the rhythm flow, and enjoy your deepest work yet.`,
       thumbnailPrompts: fallbackThumbs.prompts,
       thumbnailDetails: fallbackThumbs.details,
+      cinematicVisualBundle: generateCinematicVisualBundle(cat.id, cat.name, 'Scene'),
       imagePrompts: [fallbackFlow.imagePrompt],
       videoPrompt: fallbackFlow.videoPrompt,
       googleFlowDetails: fallbackFlow,
@@ -609,6 +644,32 @@ export const useTuneForgeStore = create<TuneForgeState>((set, get) => ({
     }));
 
     return newId;
+  },
+
+  setCinematicVariant: (variant: CinematicVariantType) => {
+    const state = get();
+    const currentPkg = state.currentPackage;
+    if (!currentPkg) return;
+
+    const bundle = currentPkg.cinematicVisualBundle || generateCinematicVisualBundle(currentPkg.categoryId, currentPkg.categoryName, variant);
+    const updatedBundle = {
+      ...bundle,
+      activeVariant: variant
+    };
+    const activeData = updatedBundle.variants[variant];
+
+    const modifiedPackage: ContentPackage = {
+      ...currentPkg,
+      cinematicVisualBundle: updatedBundle,
+      imagePrompts: activeData ? [activeData.imagePrompt] : currentPkg.imagePrompts,
+      videoPrompt: activeData ? activeData.videoPrompt : currentPkg.videoPrompt
+    };
+
+    set((s) => ({
+      currentPackage: modifiedPackage,
+      packages: s.packages.map((p) => (p.id === modifiedPackage.id ? modifiedPackage : p))
+    }));
+    state.showToast(`Varian visual diganti ke: ${variant} (${activeData?.variantTitle || variant})`);
   },
 
   regenerateBlockInCurrentPackage: async (blockName: string) => {
@@ -643,10 +704,11 @@ export const useTuneForgeStore = create<TuneForgeState>((set, get) => ({
           if (updatedData.thumbnailDetails) {
             modifiedPackage.thumbnailDetails = updatedData.thumbnailDetails;
           }
-        } else if ((blockName === 'Prompt Gambar AI' || blockName === 'Prompt Video AI' || blockName === 'Google Flow Prompts')) {
+        } else if (blockName === 'Prompt Gambar AI' || blockName === 'Prompt Video AI' || blockName === 'Google Flow Prompts' || blockName === 'Prompt Visual & Video') {
           if (updatedData.imagePrompts) modifiedPackage.imagePrompts = updatedData.imagePrompts;
           if (updatedData.videoPrompt) modifiedPackage.videoPrompt = updatedData.videoPrompt;
           if (updatedData.googleFlowDetails) modifiedPackage.googleFlowDetails = updatedData.googleFlowDetails;
+          if (updatedData.cinematicVisualBundle) modifiedPackage.cinematicVisualBundle = updatedData.cinematicVisualBundle;
         } else if (blockName === 'Catatan Teknis' && updatedData.technicalNotes) {
           modifiedPackage.technicalNotes = updatedData.technicalNotes;
         }
@@ -663,9 +725,13 @@ export const useTuneForgeStore = create<TuneForgeState>((set, get) => ({
     }
 
     // Client-side fallback regeneration
-    if (blockName === 'Prompt Gambar AI' || blockName === 'Prompt Video AI' || blockName === 'Google Flow Prompts') {
+    if (blockName === 'Prompt Gambar AI' || blockName === 'Prompt Video AI' || blockName === 'Google Flow Prompts' || blockName === 'Prompt Visual & Video') {
       const currentVar = currentPkg.googleFlowDetails?.variationIndex ?? 0;
       const nextVar = (currentVar + 1) % 3;
+      const variantNames: ('Scene' | 'Subjek' | 'Abstrak')[] = ['Scene', 'Subjek', 'Abstrak'];
+      const targetVariant = variantNames[nextVar];
+      const cinematicBundle = generateCinematicVisualBundle(currentPkg.categoryId, currentPkg.categoryName, targetVariant);
+
       const regeneratedFlow = generateGoogleFlowPrompts({
         categoryName: currentPkg.categoryName,
         genre: currentPkg.subGenre,
@@ -676,17 +742,18 @@ export const useTuneForgeStore = create<TuneForgeState>((set, get) => ({
 
       const modifiedPackage: ContentPackage = {
         ...currentPkg,
-        imagePrompts: [regeneratedFlow.imagePrompt],
-        videoPrompt: regeneratedFlow.videoPrompt,
+        cinematicVisualBundle: cinematicBundle,
+        imagePrompts: [cinematicBundle.variants[targetVariant].imagePrompt],
+        videoPrompt: cinematicBundle.variants[targetVariant].videoPrompt,
         googleFlowDetails: regeneratedFlow,
-        model: `TuneForge Google Flow Engine (Komposisi Baru #${nextVar + 1})`
+        model: `TuneForge Cinematic Engine (Varian ${targetVariant})`
       };
 
       set((s) => ({
         currentPackage: modifiedPackage,
         packages: s.packages.map((p) => (p.id === modifiedPackage.id ? modifiedPackage : p))
       }));
-      state.showToast(`Prompt Google Flow baru (#${nextVar + 1}) berhasil di-generate!`);
+      state.showToast(`Prompt Cinematic baru (Varian ${targetVariant}) berhasil di-generate!`);
       return true;
     }
 

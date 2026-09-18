@@ -3,6 +3,7 @@ import { ContentPackage } from '../src/types';
 import { generateRefinedTitleVariants } from '../src/data/titleFormulaEngine';
 import { generateEngineeredThumbnailPrompts } from '../src/data/thumbnailPromptEngine';
 import { generateGoogleFlowPrompts } from '../src/data/googleFlowEngine';
+import { generateCinematicVisualBundle } from '../src/data/cinematicPromptEngine';
 import { 
   translateDurationToEnglish, 
   translateUseCaseToEnglish, 
@@ -186,13 +187,130 @@ You MUST reply ONLY with valid, raw JSON matching this TypeScript schema:
   "videoPrompt": "string",
   "technicalNotes": "string"
 }
-Do not wrap in markdown codeblocks if possible, or wrap cleanly in \`\`\`json.
+Strictly output raw, valid JSON. Do not include markdown codeblocks, backticks, or any conversational text before or after the JSON.
 `;
 
 const PRIMARY_TEXT_MODELS = [
   'gemini-3.8-flash',
-  'gemini-3.7-flash'
+  'gemini-3.1-flash-lite'
 ];
+
+/**
+ * Safely extracts and parses JSON from LLM outputs.
+ * Handles markdown fences, trailing commentary/notes after closing braces,
+ * trailing commas, unescaped characters, and unexpected non-whitespace characters.
+ */
+export function extractJsonSafely<T = any>(rawText: string): T {
+  if (!rawText || typeof rawText !== 'string') {
+    throw new Error('Empty response received for JSON parsing');
+  }
+
+  const trimmed = rawText.trim();
+
+  // 1. First fast-path attempt on trimmed content
+  try {
+    return JSON.parse(trimmed);
+  } catch (_) {
+    // Continue to robust extraction
+  }
+
+  // 2. Balanced JSON substring extractor:
+  // Tracks string boundaries and escape characters, counting braces/brackets
+  // to isolate the exact top-level JSON structure without any trailing commentary or notes.
+  const extractBalanced = (str: string): string | null => {
+    const startIdx = str.search(/[{\[]/);
+    if (startIdx === -1) return null;
+
+    const openChar = str[startIdx];
+    const closeChar = openChar === '{' ? '}' : ']';
+    let depth = 0;
+    let inString = false;
+    let isEscaped = false;
+
+    for (let i = startIdx; i < str.length; i++) {
+      const char = str[i];
+      if (inString) {
+        if (isEscaped) {
+          isEscaped = false;
+        } else if (char === '\\') {
+          isEscaped = true;
+        } else if (char === '"') {
+          inString = false;
+        }
+      } else {
+        if (char === '"') {
+          inString = true;
+        } else if (char === openChar) {
+          depth++;
+        } else if (char === closeChar) {
+          depth--;
+          if (depth === 0) {
+            return str.substring(startIdx, i + 1);
+          }
+        }
+      }
+    }
+
+    const lastClose = str.lastIndexOf(closeChar);
+    if (lastClose > startIdx) {
+      return str.substring(startIdx, lastClose + 1);
+    }
+    return null;
+  };
+
+  const sanitizeAndParse = (snippet: string): T => {
+    try {
+      return JSON.parse(snippet);
+    } catch (_) {
+      // Repair 1: Remove trailing commas before closing braces/brackets
+      const withoutTrailingCommas = snippet.replace(/,\s*([}\]])/g, '$1');
+      try {
+        return JSON.parse(withoutTrailingCommas);
+      } catch (_) {
+        // Repair 2: Remove unescaped control characters in string literals
+        const sanitized = withoutTrailingCommas
+          .replace(/[\u0000-\u0009\u000B\u000C\u000E-\u001F\u007F-\u009F]/g, '');
+        return JSON.parse(sanitized);
+      }
+    }
+  };
+
+  // Attempt balanced extraction from raw trimmed text
+  const balanced = extractBalanced(trimmed);
+  if (balanced) {
+    try {
+      return sanitizeAndParse(balanced);
+    } catch (_) {
+      // Continue to markdown codeblock check
+    }
+  }
+
+  // 3. Try extracting content within markdown codeblocks (```json ... ```)
+  const codeBlockMatch = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  if (codeBlockMatch && codeBlockMatch[1]) {
+    const insideBlock = codeBlockMatch[1].trim();
+    try {
+      return sanitizeAndParse(insideBlock);
+    } catch (_) {
+      const innerBalanced = extractBalanced(insideBlock);
+      if (innerBalanced) {
+        try {
+          return sanitizeAndParse(innerBalanced);
+        } catch (_) {}
+      }
+    }
+  }
+
+  // 4. Last resort: simple slice between first { and last }
+  const firstBrace = trimmed.indexOf('{');
+  const lastBrace = trimmed.lastIndexOf('}');
+  if (firstBrace !== -1 && lastBrace > firstBrace) {
+    const sliced = trimmed.substring(firstBrace, lastBrace + 1);
+    return sanitizeAndParse(sliced);
+  }
+
+  throw new Error(`Failed to extract valid JSON from Gemini output (length: ${rawText.length})`);
+}
 
 /**
  * Execute Gemini content generation with multi-model resilience and fallback
@@ -210,11 +328,15 @@ async function callGeminiWithResilience<T>(
         statusCode === 503 ||
         statusCode === 429 ||
         statusCode === 500 ||
+        statusCode === 504 ||
         err?.message?.includes('high demand') ||
-        err?.message?.includes('UNAVAILABLE');
+        err?.message?.includes('UNAVAILABLE') ||
+        err?.message?.includes('fetch failed') ||
+        err?.message?.includes('timeout') ||
+        err?.name === 'TypeError';
 
       if (isTransient) {
-        console.warn(`Gemini model ${model} experienced temporary demand (${statusCode || '503/transient'}). Switching to fallback model...`);
+        console.warn(`Gemini model ${model} experienced temporary demand or network delay (${statusCode || 'transient'}). Switching to fallback model...`);
         await new Promise((r) => setTimeout(r, 300));
         continue;
       }
@@ -252,7 +374,7 @@ CRITICAL MANDATORY INSTRUCTION (100% US ENGLISH ONLY):
 - Even if the user provided inputs in Indonesian (e.g. "${input.duration || ''}", "${input.useCase || ''}", "${input.optionalKeyword || ''}"), YOU MUST TRANSLATE and CONVERT all concepts, activities, durations, and moods into fluent, high-CTR US English.
 - Under NO circumstances may any Indonesian word appear in the JSON output.
 
-Strictly output JSON following the system prompt rules.
+Strictly output raw, valid JSON following the system prompt rules with no trailing commentary or backticks.
 `;
 
     const aiCall = await callGeminiWithResilience(async (model) => {
@@ -272,13 +394,7 @@ Strictly output JSON following the system prompt rules.
     if (aiCall && aiCall.result) {
       try {
         const responseText = aiCall.result.text || '';
-        const cleanedJson = responseText
-          .replace(/^```json\s*/i, '')
-          .replace(/^```\s*/i, '')
-          .replace(/\s*```$/i, '')
-          .trim();
-
-        const parsed = JSON.parse(cleanedJson);
+        const parsed = extractJsonSafely(responseText);
 
         // Compute verified 5-variant formula titles
         const fallbackVariants = generateRefinedTitleVariants({
@@ -377,6 +493,7 @@ Strictly output JSON following the system prompt rules.
             lifestyle: parsed.thumbnailPrompts?.lifestyle || engineeredThumbs.prompts.lifestyle
           },
           thumbnailDetails: engineeredThumbs.details,
+          cinematicVisualBundle: generateCinematicVisualBundle(input.categoryId, input.categoryName, 'Scene'),
           imagePrompts: [bestImagePrompt],
           videoPrompt: resolvedVideoPrompt,
           googleFlowDetails: flowFallback,
@@ -435,7 +552,7 @@ Follow these specific rules:
 - If "Google Flow Prompts": return JSON { "imagePrompts": ["1 best image prompt..."], "videoPrompt": "Locked-off tripod camera..." }
 - If "Catatan Teknis": return JSON { "technicalNotes": "..." }
 
-Return strictly JSON.
+Return strictly valid, raw JSON with no conversational text or markdown codeblocks.
 `;
 
     const aiCall = await callGeminiWithResilience(async (model) => {
@@ -448,7 +565,7 @@ Return strictly JSON.
 
     if (aiCall && aiCall.result) {
       try {
-        const parsed = JSON.parse(aiCall.result.text?.trim() || '{}');
+        const parsed = extractJsonSafely(aiCall.result.text || '{}');
         return { updatedData: parsed, model: `${aiCall.modelName} (Live AI)` };
       } catch (e) {
         console.warn('Regenerate JSON parsing failed, falling back:', e);
@@ -517,9 +634,13 @@ Return strictly JSON.
     }
     case 'Prompt Gambar AI':
     case 'Prompt Video AI':
-    case 'Google Flow Prompts': {
+    case 'Google Flow Prompts':
+    case 'Prompt Visual & Video': {
       const currentVar = pkg.googleFlowDetails?.variationIndex ?? 0;
       const nextVar = (currentVar + 1) % 3;
+      const variantNames: ('Scene' | 'Subjek' | 'Abstrak')[] = ['Scene', 'Subjek', 'Abstrak'];
+      const targetVariant = variantNames[nextVar];
+      const cinematicBundle = generateCinematicVisualBundle(pkg.categoryId, pkg.categoryName, targetVariant);
       const flow = generateGoogleFlowPrompts({
         categoryName: pkg.categoryName,
         genre: pkg.subGenre,
@@ -529,11 +650,12 @@ Return strictly JSON.
       });
       return {
         updatedData: {
-          imagePrompts: [flow.imagePrompt],
-          videoPrompt: flow.videoPrompt,
-          googleFlowDetails: flow
+          imagePrompts: [cinematicBundle.variants[targetVariant].imagePrompt],
+          videoPrompt: cinematicBundle.variants[targetVariant].videoPrompt,
+          googleFlowDetails: flow,
+          cinematicVisualBundle: cinematicBundle
         },
-        model: `TuneForge Google Flow Engine (New Composition #${nextVar + 1})`
+        model: `TuneForge Cinematic Engine (Varian ${targetVariant})`
       };
     }
     default:
@@ -617,6 +739,7 @@ function generateAlgorithmicFallback(input: ForgeInput, newId: string, startTime
     introHook: `Welcome to this 1-hour session of ${input.subGenre}. Keep your focus uninterrupted, let the rhythm flow, and enjoy your deepest work yet.`,
     thumbnailPrompts: thumbEngine.prompts,
     thumbnailDetails: thumbEngine.details,
+    cinematicVisualBundle: generateCinematicVisualBundle(input.categoryId, input.categoryName, 'Scene'),
     imagePrompts: [flowEngine.imagePrompt],
     videoPrompt: flowEngine.videoPrompt,
     googleFlowDetails: flowEngine,

@@ -15,13 +15,19 @@ export const AdminUsers: React.FC = () => {
   }, [fetchUsers]);
 
   const toggleUserRole = async (u: User) => {
-    const newRole: 'user' | 'admin' = u.role === 'admin' ? 'user' : 'admin';
-    const success = await updateUserRoleInBackend(u.id, newRole);
+    if (u.email.toLowerCase() === 'uqiwan@gmail.com') {
+      showToast('Akun uqiwan@gmail.com adalah Pemilik Sistem permanen.');
+      return;
+    }
+
+    if (u.role === 'user') {
+      showToast('Sesuai kebijakan sistem, hanya uqiwan@gmail.com yang dapat menjadi Super Admin.');
+      return;
+    }
+
+    const success = await updateUserRoleInBackend(u.id, 'user');
     if (success) {
-      if (currentUser && u.id === currentUser.id) {
-        setUserRole(newRole);
-      }
-      showToast(`Peran ${u.name} berhasil diubah menjadi ${newRole.toUpperCase()}`);
+      showToast(`Peran ${u.name} diubah menjadi KREATOR`);
     } else {
       showToast(`Gagal mengubah peran pengguna.`);
     }
@@ -139,16 +145,15 @@ export const AdminUsers: React.FC = () => {
                       {new Date(u.lastLoginAt).toLocaleDateString('id-ID')}
                     </td>
                     <td className="px-5 py-4 whitespace-nowrap text-right">
-                      <button
-                        onClick={() => toggleUserRole(u)}
-                        className={`px-3 py-1 rounded-md text-xs font-medium cursor-pointer transition-colors ${
-                          u.role === 'admin'
-                            ? 'bg-slate-100 hover:bg-slate-200 text-slate-700'
-                            : 'bg-amber-500 hover:bg-amber-600 text-slate-950 font-semibold'
-                        }`}
-                      >
-                        {u.role === 'admin' ? 'Ubah ke Kreator' : 'Jadikan Admin'}
-                      </button>
+                      {u.email.toLowerCase() === 'uqiwan@gmail.com' ? (
+                        <span className="px-2.5 py-1 rounded-md text-[11px] font-semibold bg-amber-100 text-amber-900 border border-amber-300">
+                          👑 Super Admin Permanen
+                        </span>
+                      ) : (
+                        <span className="px-2.5 py-1 rounded-md text-[11px] font-medium bg-slate-100 text-slate-600">
+                          🎨 Kreator
+                        </span>
+                      )}
                     </td>
                   </tr>
                 ))
