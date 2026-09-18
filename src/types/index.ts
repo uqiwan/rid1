@@ -102,6 +102,8 @@ export interface ContentPackage {
   technicalNotes: string;
 }
 
+export type TuneForgePackage = ContentPackage;
+
 export type CinematicVariantType = 'Scene' | 'Subjek' | 'Abstrak';
 
 export interface CinematicPlatformPrompts {

@@ -9,8 +9,13 @@ import {
   RotateCcw
 } from 'lucide-react';
 import { useTuneForgeStore } from '../../store/useTuneForgeStore';
+import { GeneratedOutputBlocks } from '../../components/dashboard/GeneratedOutputBlocks';
 
-export const GeneratePage: React.FC = () => {
+interface GeneratePageProps {
+  packageId?: string;
+}
+
+export const GeneratePage: React.FC<GeneratePageProps> = ({ packageId }) => {
   const { 
     categories, 
     selectedCategoryId, 
@@ -22,6 +27,8 @@ export const GeneratePage: React.FC = () => {
     optionalKeyword, 
     isGenerating, 
     generationStepMessage,
+    currentPackage,
+    packages,
     setSelectedCategory, 
     setSelectedSubGenre, 
     toggleMood, 
@@ -37,7 +44,27 @@ export const GeneratePage: React.FC = () => {
   const [categorySearch, setCategorySearch] = useState('');
   const [loadingLongWait, setLoadingLongWait] = useState(false);
 
-  // 2D: Tampilkan pesan khusus jika proses memakan waktu lebih dari 5 detik
+  // If packageId is provided in URL, prioritize that package; otherwise use currentPackage
+  const displayedPkg = React.useMemo(() => {
+    if (packageId) {
+      const found = packages.find((p) => p.id === packageId);
+      if (found) return found;
+    }
+    return currentPackage || (packages.length > 0 ? packages[0] : null);
+  }, [packageId, packages, currentPackage]);
+
+  // If packageId was opened, sync left panel inputs with that package for convenience
+  useEffect(() => {
+    if (packageId && displayedPkg) {
+      if (displayedPkg.categoryId) setSelectedCategory(displayedPkg.categoryId);
+      if (displayedPkg.subGenre) setSelectedSubGenre(displayedPkg.subGenre);
+      if (displayedPkg.duration) setDuration(displayedPkg.duration);
+      if (displayedPkg.useCase) setUseCase(displayedPkg.useCase);
+      if (displayedPkg.optionalKeyword) setOptionalKeyword(displayedPkg.optionalKeyword);
+    }
+  }, [packageId]);
+
+  // Tampilkan pesan jika proses memakan waktu lebih dari 5 detik
   useEffect(() => {
     let timer: any;
     if (isGenerating) {
@@ -96,7 +123,21 @@ export const GeneratePage: React.FC = () => {
     e.preventDefault();
     if (!isFormValid || isGenerating) return;
     const newId = await forgeNewPackage();
-    navigate(`/generate/result/${newId}`);
+    if (newId) {
+      navigate(`/generate/result/${newId}`);
+    }
+  };
+
+  const handleQuickSample = async () => {
+    setSelectedCategory('cat-01');
+    setSelectedSubGenre('Lo-fi Hip-Hop Study');
+    setDuration('1 Hour');
+    setUseCase('Study & Work');
+    setOptionalKeyword('Rain in Tokyo');
+    const newId = await forgeNewPackage();
+    if (newId) {
+      navigate(`/generate/result/${newId}`);
+    }
   };
 
   return (
@@ -105,7 +146,7 @@ export const GeneratePage: React.FC = () => {
       {isGenerating && (
         <div
           style={{
-            backgroundColor: 'rgba(0,0,0,0.25)',
+            backgroundColor: 'rgba(0,0,0,0.3)',
             backdropFilter: 'blur(20px) saturate(1.8)',
             WebkitBackdropFilter: 'blur(20px) saturate(1.8)',
           }}
@@ -123,7 +164,7 @@ export const GeneratePage: React.FC = () => {
             }}
             className="text-center space-y-4"
           >
-            {/* Inline macOS 14px Spinner SVG */}
+            {/* Inline macOS Spinner SVG */}
             <div className="flex justify-center">
               <svg
                 className="animate-spin w-8 h-8 text-[var(--accent-blue)]"
@@ -187,400 +228,312 @@ export const GeneratePage: React.FC = () => {
         </div>
       )}
 
-      {/* Main Content Form Container (Max Width 780px per Bagian 5B) */}
-      <div
-        style={{
-          maxWidth: '780px',
-          margin: '0 auto',
-          padding: 'var(--space-8) var(--space-6)',
-        }}
-        className="space-y-5"
-      >
-        {/* Header Halaman Ringkas */}
-        <div className="flex items-center justify-between gap-3 pb-1">
-          <div>
-            <h1
-              style={{
-                fontSize: 'var(--text-xl)',
-                fontWeight: 'var(--weight-semibold)',
-                color: 'var(--text-primary)',
-              }}
-              className="m-0 tracking-tight"
-            >
-              Forge Paket Konten Musik
-            </h1>
-            <p
-              style={{
-                fontSize: 'var(--text-sm)',
-                color: 'var(--text-secondary)',
-              }}
-              className="mt-1 m-0"
-            >
-              Konfigurasi parameter musik untuk menghasilkan paket aset YouTube lengkap.
-            </p>
-          </div>
-
-          <button
-            type="button"
-            onClick={resetForm}
-            className="btn-secondary text-xs"
-            title="Reset Pilihan"
-          >
-            <RotateCcw className="w-3.5 h-3.5" />
-            <span>Reset</span>
-          </button>
-        </div>
-
-        <form onSubmit={handleForge} className="space-y-5">
-          {/* BLOK: Kategori Musik */}
-          <section className="macos-card space-y-4">
-            <div className="macos-card-header">
+      {/* WRAPPER UTAMA: kontainer dua kolom (.app-layout) */}
+      <div className="app-layout">
+        
+        {/* PANEL KIRI: semua input, setelan, tombol generate */}
+        <aside className="panel-left">
+          <form onSubmit={handleForge} className="panel-left__inner">
+            
+            {/* Header Ringkas Panel Kiri */}
+            <div className="flex items-center justify-between gap-2 pb-1">
               <div>
-                <h2 className="macos-card-title">Kategori Musik</h2>
-                <p className="macos-card-desc">Pilih satu dari 18 kategori musik terkurasi.</p>
-              </div>
-
-              {/* Pencarian Kategori */}
-              <div className="relative w-48 shrink-0">
-                <Search className="w-3.5 h-3.5 text-[var(--text-secondary)] absolute left-2.5 top-1/2 -translate-y-1/2" />
-                <input
-                  type="text"
-                  value={categorySearch}
-                  onChange={(e) => setCategorySearch(e.target.value)}
-                  placeholder="Cari..."
-                  className="macos-input pl-8 py-1 text-xs"
-                />
-                {categorySearch && (
-                  <button
-                    type="button"
-                    onClick={() => setCategorySearch('')}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] cursor-pointer"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* Grid 18 Kategori (Clean macOS buttons, no loud emojis) */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-              {filteredCategories.map((cat) => {
-                const isSelected = cat.id === selectedCategoryId;
-                return (
-                  <button
-                    type="button"
-                    key={cat.id}
-                    onClick={() => setSelectedCategory(cat.id)}
-                    style={{
-                      borderRadius: 'var(--radius-sm)',
-                      backgroundColor: isSelected ? 'rgba(0, 122, 255, 0.08)' : 'var(--bg-base)',
-                      borderColor: isSelected ? 'var(--accent-blue)' : 'var(--border-subtle)',
-                      color: isSelected ? 'var(--accent-blue)' : 'var(--text-primary)',
-                      fontWeight: isSelected ? 'var(--weight-semibold)' : 'var(--weight-regular)',
-                      fontSize: 'var(--text-xs)',
-                      padding: '10px 12px',
-                    }}
-                    className="border text-left cursor-pointer transition-colors flex items-center justify-between hover:bg-[var(--bg-inset)] min-h-[44px]"
-                  >
-                    <span className="truncate">{cat.name}</span>
-                    {isSelected && (
-                      <Check className="w-3.5 h-3.5 text-[var(--accent-blue)] shrink-0 ml-1" />
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          </section>
-
-          {/* BLOK: Sub-Genre */}
-          <section className="macos-card space-y-4">
-            <div className="macos-card-header">
-              <div>
-                <h2 className="macos-card-title">Sub-Genre</h2>
-                <p className="macos-card-desc">
-                  Sub-spesialisasi musik untuk {currentCategory.name}.
+                <h1 className="block__title text-sm sm:text-base font-semibold text-[var(--text-primary)]">
+                  Parameter Musik
+                </h1>
+                <p className="block__description text-[11px] sm:text-xs">
+                  Konfigurasi untuk menghasilkan 7 blok paket aset YouTube.
                 </p>
               </div>
+
+              <button
+                type="button"
+                onClick={resetForm}
+                className="btn-secondary text-xs py-1 px-2.5 min-h-[32px]"
+                title="Reset Pilihan"
+              >
+                <RotateCcw className="w-3 h-3" />
+                <span>Reset</span>
+              </button>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
-              {currentCategory.subGenres.map((sg) => {
-                const isSelected = sg === selectedSubGenre;
-                return (
-                  <button
-                    type="button"
-                    key={sg}
-                    onClick={() => setSelectedSubGenre(sg)}
-                    style={{
-                      borderRadius: 'var(--radius-sm)',
-                      backgroundColor: isSelected ? 'rgba(0, 122, 255, 0.08)' : 'var(--bg-base)',
-                      borderColor: isSelected ? 'var(--accent-blue)' : 'var(--border-subtle)',
-                      color: isSelected ? 'var(--accent-blue)' : 'var(--text-primary)',
-                      fontWeight: isSelected ? 'var(--weight-semibold)' : 'var(--weight-regular)',
-                      fontSize: 'var(--text-xs)',
-                      padding: '10px 14px',
-                    }}
-                    className="border text-left cursor-pointer transition-colors flex items-center justify-between hover:bg-[var(--bg-inset)] min-h-[44px]"
-                  >
-                    <span className="truncate">{sg}</span>
-                    {isSelected && (
-                      <Check className="w-3.5 h-3.5 text-[var(--accent-blue)] shrink-0 ml-1" />
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          </section>
+            {/* BLOK 1: Kategori Musik */}
+            <section className="block" id="block-1">
+              <div className="block__header">
+                <div>
+                  <h2 className="block__title">Kategori Musik</h2>
+                  <p className="block__description">Pilih satu dari 18 kategori musik terkurasi.</p>
+                </div>
 
-          {/* BLOK: Suasana (Mood) */}
-          <section className="macos-card space-y-4">
-            <div className="macos-card-header">
-              <div>
-                <h2 className="macos-card-title">Suasana (Mood)</h2>
-                <p className="macos-card-desc">
-                  Pilih 1–3 emosi utama pendengar.
-                </p>
+                {/* Pencarian Kategori (Disembunyikan) */}
+                <div className="relative w-36 sm:w-44 shrink-0" style={{ display: 'none' }}>
+                  <Search className="w-3.5 h-3.5 text-[var(--text-secondary)] absolute left-2.5 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    value={categorySearch}
+                    onChange={(e) => setCategorySearch(e.target.value)}
+                    placeholder="Cari..."
+                    className="macos-input pl-8 py-1 text-xs"
+                  />
+                  {categorySearch && (
+                    <button
+                      type="button"
+                      onClick={() => setCategorySearch('')}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] cursor-pointer"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
               </div>
-              <span className="macos-badge text-[11px]">
-                {selectedMoods.length}/3 Terpilih
-              </span>
-            </div>
 
-            <div className="flex flex-wrap gap-2">
-              {currentCategory.moods.map((mood) => {
-                const isSelected = selectedMoods.includes(mood);
-                return (
-                  <button
-                    type="button"
-                    key={mood}
-                    onClick={() => toggleMood(mood)}
-                    style={{
-                      borderRadius: 'var(--radius-full)',
-                      backgroundColor: isSelected ? 'var(--accent-blue)' : 'var(--bg-base)',
-                      borderColor: isSelected ? 'var(--accent-blue)' : 'var(--border-subtle)',
-                      color: isSelected ? 'var(--text-inverse)' : 'var(--text-primary)',
-                      fontWeight: isSelected ? 'var(--weight-semibold)' : 'var(--weight-regular)',
-                      fontSize: 'var(--text-xs)',
-                      padding: '6px 14px',
-                    }}
-                    className="border cursor-pointer transition-colors flex items-center gap-1.5 hover:bg-[var(--bg-inset)]"
-                  >
-                    <span>{mood}</span>
-                    {isSelected && <Check className="w-3 h-3 text-white" />}
-                  </button>
-                );
-              })}
-            </div>
-          </section>
-
-          {/* BLOK: Gaya Thumbnail */}
-          <section className="macos-card space-y-4">
-            <div className="macos-card-header">
-              <div>
-                <h2 className="macos-card-title">Gaya Thumbnail</h2>
-                <p className="macos-card-desc">
-                  Target CTR &gt;20% dengan formula komposisi visual teruji.
-                </p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
-              {thumbnailStyles.map((style) => {
-                const isSelected = selectedThumbnailStyle === style.id;
-                return (
-                  <button
-                    type="button"
-                    key={style.id}
-                    onClick={() => setSelectedThumbnailStyle(style.id as any)}
-                    style={{
-                      borderRadius: 'var(--radius-sm)',
-                      backgroundColor: isSelected ? 'rgba(0, 122, 255, 0.08)' : 'var(--bg-base)',
-                      borderColor: isSelected ? 'var(--accent-blue)' : 'var(--border-subtle)',
-                      color: isSelected ? 'var(--accent-blue)' : 'var(--text-primary)',
-                      fontWeight: isSelected ? 'var(--weight-semibold)' : 'var(--weight-regular)',
-                      padding: '10px 12px',
-                    }}
-                    className="border text-left cursor-pointer transition-colors flex flex-col justify-between min-h-[64px] hover:bg-[var(--bg-inset)]"
-                  >
-                    <div className="flex items-center justify-between w-full">
-                      <span className="text-[10px] text-[var(--text-secondary)] font-mono">
-                        {style.tag}
-                      </span>
-                      {isSelected && (
-                        <Check className="w-3 h-3 text-[var(--accent-blue)]" />
+              {/* Daftar 18 Kategori — 1 Kolom Vertikal Penuh & SISTEM WARNA VARIASI SIKLIKAL */}
+              <div className="grid grid-cols-1 gap-2 max-h-72 overflow-y-auto pr-1 w-full">
+                {filteredCategories.map((cat, idx) => {
+                  const isSelected = cat.id === selectedCategoryId;
+                  return (
+                    <button
+                      type="button"
+                      key={cat.id}
+                      onClick={() => setSelectedCategory(cat.id)}
+                      className={`var-option var-${idx % 4} ${isSelected ? 'is-selected' : ''} min-h-[46px] w-full flex items-center justify-between px-3.5 py-2.5 text-left`}
+                    >
+                      <span className="whitespace-normal text-left break-words font-medium text-xs sm:text-sm leading-snug">{cat.name}</span>
+                      {isSelected ? (
+                        <Check className="w-3.5 h-3.5 var-accent shrink-0 ml-2 font-bold" />
+                      ) : (
+                        <span className="w-2 h-2 rounded-full var-accent bg-current opacity-60 shrink-0 ml-2" />
                       )}
-                    </div>
-                    <span className="text-xs font-semibold mt-2">
-                      {style.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+
+            {/* BLOK 2: Sub-Genre */}
+            <section className="block" id="block-2">
+              <div className="block__header">
+                <div>
+                  <h2 className="block__title">Sub-Genre</h2>
+                  <p className="block__description">
+                    Sub-spesialisasi untuk {currentCategory.name}.
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {currentCategory.subGenres.map((sg, idx) => {
+                  const isSelected = sg === selectedSubGenre;
+                  return (
+                    <button
+                      type="button"
+                      key={sg}
+                      onClick={() => setSelectedSubGenre(sg)}
+                      className={`var-option var-${idx % 4} ${isSelected ? 'is-selected' : ''} min-h-[46px]`}
+                    >
+                      <span className="truncate font-medium">{sg}</span>
+                      {isSelected ? (
+                        <Check className="w-3.5 h-3.5 var-accent shrink-0 ml-1 font-bold" />
+                      ) : (
+                        <span className="w-2 h-2 rounded-full var-accent bg-current opacity-60 shrink-0 ml-1" />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+
+            {/* BLOK 3: Suasana (Mood) */}
+            <section className="block" id="block-3">
+              <div className="block__header">
+                <div>
+                  <h2 className="block__title">Suasana (Mood)</h2>
+                  <p className="block__description">
+                    Pilih 1–3 emosi utama pendengar.
+                  </p>
+                </div>
+                <span className="macos-badge text-[11px]">
+                  {selectedMoods.length}/3 Terpilih
+                </span>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                {currentCategory.moods.map((mood, idx) => {
+                  const isSelected = selectedMoods.includes(mood);
+                  return (
+                    <button
+                      type="button"
+                      key={mood}
+                      onClick={() => toggleMood(mood)}
+                      className={`var-option var-${idx % 4} ${isSelected ? 'is-selected' : ''} min-h-[38px] px-3.5 py-2`}
+                    >
+                      <span className="font-medium">{mood}</span>
+                      {isSelected ? (
+                        <Check className="w-3 h-3 var-accent shrink-0 ml-1.5 font-bold" />
+                      ) : (
+                        <span className="w-1.5 h-1.5 rounded-full var-accent bg-current opacity-60 shrink-0 ml-1.5" />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+
+            {/* BLOK 4: Input / Setelan Saja */}
+            <section className="block" id="block-4-input">
+              <div className="block__header">
+                <div>
+                  <h2 className="block__title">Setelan &amp; Gaya Visual</h2>
+                  <p className="block__description">
+                    Target CTR &gt;20% dengan formula komposisi visual teruji.
+                  </p>
+                </div>
+              </div>
+
+              {/* Gaya Thumbnail */}
+              <div className="space-y-1.5">
+                <div className="text-[11px] font-semibold text-[var(--text-secondary)]">
+                  Gaya Thumbnail Utama:
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  {thumbnailStyles.map((style, idx) => {
+                    const isSelected = selectedThumbnailStyle === style.id;
+                    return (
+                      <button
+                        type="button"
+                        key={style.id}
+                        onClick={() => setSelectedThumbnailStyle(style.id as any)}
+                        className={`var-option var-${idx % 4} ${isSelected ? 'is-selected' : ''} min-h-[60px] flex flex-col justify-between items-start`}
+                      >
+                        <div className="flex items-center justify-between w-full">
+                          <span className="text-[10px] var-accent font-mono font-bold">
+                            {style.tag}
+                          </span>
+                          {isSelected ? (
+                            <Check className="w-3.5 h-3.5 var-accent shrink-0 font-bold" />
+                          ) : (
+                            <span className="text-[10px] var-accent font-mono opacity-80">{style.tag}</span>
+                          )}
+                        </div>
+                        <span className="text-xs font-semibold mt-1">
+                          {style.label}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Durasi Video & Aktivitas */}
+              <div className="space-y-3 pt-2 border-t border-[var(--border-subtle)]">
+                {/* Durasi */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center gap-1.5">
+                    <Clock className="w-3.5 h-3.5 text-[var(--text-secondary)]" />
+                    <span className="text-xs font-medium text-[var(--text-primary)]">
+                      Durasi Video
                     </span>
-                  </button>
-                );
-              })}
-            </div>
-          </section>
+                  </div>
 
-          {/* BLOK: Durasi Video & Aktivitas Pendengar */}
-          <section className="macos-card space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              {/* Durasi */}
-              <div className="space-y-3">
-                <div className="flex items-center gap-1.5">
-                  <Clock className="w-3.5 h-3.5 text-[var(--text-secondary)]" />
-                  <h3
-                    style={{
-                      fontSize: 'var(--text-sm)',
-                      fontWeight: 'var(--weight-semibold)',
-                      color: 'var(--text-primary)',
-                    }}
-                    className="m-0"
-                  >
-                    Durasi Video
-                  </h3>
+                  <div className="flex flex-wrap gap-1.5">
+                    {durationOptions.map((opt, idx) => {
+                      const isSelected = (duration === opt.value) || (!duration && opt.value === '');
+                      return (
+                        <button
+                          key={opt.label}
+                          type="button"
+                          onClick={() => setDuration(opt.value)}
+                          className={`var-option var-${idx % 4} ${isSelected ? 'is-selected' : ''} min-h-[36px] px-3.5 py-1.5`}
+                        >
+                          <span className="font-medium">{opt.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
 
-                <div className="flex flex-wrap gap-1.5">
-                  {durationOptions.map((opt) => {
-                    const isSelected = (duration === opt.value) || (!duration && opt.value === '');
-                    return (
+                {/* Aktivitas Pendengar */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center gap-1.5">
+                    <Activity className="w-3.5 h-3.5 text-[var(--text-secondary)]" />
+                    <span className="text-xs font-medium text-[var(--text-primary)]">
+                      Aktivitas Pendengar
+                    </span>
+                  </div>
+
+                  <div className="flex flex-wrap gap-1.5">
+                    {activityOptions.map((act, idx) => {
+                      const isSelected = useCase === act;
+                      return (
+                        <button
+                          key={act}
+                          type="button"
+                          onClick={() => setUseCase(act)}
+                          className={`var-option var-${idx % 4} ${isSelected ? 'is-selected' : ''} min-h-[36px] px-3.5 py-1.5`}
+                        >
+                          <span className="font-medium">{act}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Konteks Tambahan */}
+                <div className="space-y-1 pt-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-medium text-[var(--text-primary)]">
+                      Konteks Tambahan (Opsional)
+                    </span>
+                    <span className="text-[10px] text-[var(--text-tertiary)] font-mono">
+                      {optionalKeyword.length}/80
+                    </span>
+                  </div>
+                  <input
+                    type="text"
+                    value={optionalKeyword}
+                    onChange={(e) => setOptionalKeyword(e.target.value.replace(/[<>{}[\]\\]/g, ''))}
+                    maxLength={80}
+                    placeholder="Misal: 'Rain in Tokyo', 'Midnight Studio'..."
+                    className="macos-input text-xs py-1.5"
+                  />
+                  <div className="flex flex-wrap items-center gap-1 pt-0.5">
+                    {sampleKeywords.slice(0, 3).map((kw, i) => (
                       <button
-                        key={opt.label}
                         type="button"
-                        onClick={() => setDuration(opt.value)}
-                        style={{
-                          borderRadius: 'var(--radius-sm)',
-                          backgroundColor: isSelected ? 'rgba(0, 122, 255, 0.08)' : 'var(--bg-base)',
-                          borderColor: isSelected ? 'var(--accent-blue)' : 'var(--border-subtle)',
-                          color: isSelected ? 'var(--accent-blue)' : 'var(--text-primary)',
-                          fontWeight: isSelected ? 'var(--weight-semibold)' : 'var(--weight-regular)',
-                          fontSize: 'var(--text-xs)',
-                          padding: '6px 10px',
-                        }}
-                        className="border cursor-pointer transition-colors hover:bg-[var(--bg-inset)]"
+                        key={i}
+                        onClick={() => setOptionalKeyword(kw)}
+                        className="btn-secondary text-[10px] py-0.5 px-1.5 font-normal"
                       >
-                        {opt.label}
+                        + {kw}
                       </button>
-                    );
-                  })}
+                    ))}
+                  </div>
                 </div>
-
-                <input
-                  type="text"
-                  value={duration}
-                  onChange={(e) => setDuration(e.target.value)}
-                  placeholder="Kustom (misal: '45 Menit', '4 Jam')..."
-                  className="macos-input text-xs py-1.5"
-                />
               </div>
+            </section>
 
-              {/* Aktivitas Pendengar */}
-              <div className="space-y-3">
-                <div className="flex items-center gap-1.5">
-                  <Activity className="w-3.5 h-3.5 text-[var(--text-secondary)]" />
-                  <h3
-                    style={{
-                      fontSize: 'var(--text-sm)',
-                      fontWeight: 'var(--weight-semibold)',
-                      color: 'var(--text-primary)',
-                    }}
-                    className="m-0"
-                  >
-                    Aktivitas Pendengar
-                  </h3>
-                </div>
-
-                <div className="flex flex-wrap gap-1.5">
-                  {activityOptions.map((act) => {
-                    const isSelected = useCase === act;
-                    return (
-                      <button
-                        key={act}
-                        type="button"
-                        onClick={() => setUseCase(act)}
-                        style={{
-                          borderRadius: 'var(--radius-sm)',
-                          backgroundColor: isSelected ? 'rgba(0, 122, 255, 0.08)' : 'var(--bg-base)',
-                          borderColor: isSelected ? 'var(--accent-blue)' : 'var(--border-subtle)',
-                          color: isSelected ? 'var(--accent-blue)' : 'var(--text-primary)',
-                          fontWeight: isSelected ? 'var(--weight-semibold)' : 'var(--weight-regular)',
-                          fontSize: 'var(--text-xs)',
-                          padding: '6px 10px',
-                        }}
-                        className="border cursor-pointer transition-colors hover:bg-[var(--bg-inset)]"
-                      >
-                        {act}
-                      </button>
-                    );
-                  })}
-                </div>
-
-                <input
-                  type="text"
-                  value={useCase}
-                  onChange={(e) => setUseCase(e.target.value)}
-                  placeholder="Kustom (misal: 'Journaling', 'Morning Routine')..."
-                  className="macos-input text-xs py-1.5"
-                />
-              </div>
+            {/* Tombol Generate — Selalu di bawah semua input (.generate-bar) */}
+            <div className="generate-bar">
+              <button
+                type="submit"
+                disabled={!isFormValid || isGenerating}
+                className="btn-primary min-h-[44px] flex items-center justify-center gap-2"
+              >
+                <Wand2 className="w-4 h-4" />
+                <span>{isGenerating ? 'Memproses Paket...' : 'Generate Paket Konten'}</span>
+              </button>
             </div>
-          </section>
+          </form>
+        </aside>
 
-          {/* BLOK: Konteks Tambahan */}
-          <section className="macos-card space-y-3">
-            <div className="macos-card-header mb-2">
-              <div>
-                <h2 className="macos-card-title">Konteks Tambahan (Opsional)</h2>
-                <p className="macos-card-desc">Kata kunci suasana atau elemen visual spesifik.</p>
-              </div>
-              <span className="text-[11px] text-[var(--text-tertiary)] font-mono">
-                {optionalKeyword.length}/80
-              </span>
-            </div>
+        {/* PANEL KANAN: semua area output hasil generate */}
+        <main className="panel-right">
+          <GeneratedOutputBlocks 
+            pkg={displayedPkg} 
+            onQuickSample={handleQuickSample} 
+          />
+        </main>
 
-            <input
-              type="text"
-              value={optionalKeyword}
-              onChange={(e) => setOptionalKeyword(e.target.value.replace(/[<>{}[\]\\]/g, ''))}
-              maxLength={80}
-              placeholder="Contoh: 'Rain in Tokyo', 'Minimalist Cozy Workspace', 'Midnight Studio'..."
-              className="macos-input text-xs py-2"
-            />
-
-            {/* Quick Inspiration Chips */}
-            <div className="flex flex-wrap items-center gap-1.5 pt-1">
-              <span className="text-[11px] text-[var(--text-secondary)] mr-1">Inspirasi:</span>
-              {sampleKeywords.map((kw, i) => (
-                <button
-                  type="button"
-                  key={i}
-                  onClick={() => setOptionalKeyword(kw)}
-                  className="btn-secondary text-[11px] py-0.5 px-2 font-normal"
-                >
-                  + {kw}
-                </button>
-              ))}
-            </div>
-          </section>
-
-          {/* Aksi Utama (Varian 1 Primary Button) */}
-          <div className="pt-2 flex items-center justify-end gap-3">
-            <button
-              type="button"
-              onClick={resetForm}
-              className="btn-secondary"
-            >
-              Reset Pilihan
-            </button>
-
-            <button
-              type="submit"
-              disabled={!isFormValid || isGenerating}
-              className="btn-primary"
-            >
-              <Wand2 className="w-4 h-4" />
-              <span>{isGenerating ? 'Memproses...' : 'Forge Konten Baru'}</span>
-            </button>
-          </div>
-        </form>
       </div>
     </div>
   );

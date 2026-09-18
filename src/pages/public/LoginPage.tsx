@@ -131,9 +131,11 @@ export const LoginPage: React.FC = () => {
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Email Input */}
           <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-              Alamat Email Google: <span className="text-rose-500">*</span>
-            </label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="text-xs font-semibold text-slate-700">
+                Alamat Email Google: <span className="text-rose-500">*</span>
+              </label>
+            </div>
             <div className="relative">
               <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
               <input
@@ -154,9 +156,11 @@ export const LoginPage: React.FC = () => {
 
           {/* Name Input */}
           <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-              Nama Lengkap / Nama Channel: <span className="text-rose-500">*</span>
-            </label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="text-xs font-semibold text-slate-700">
+                Nama Lengkap / Nama Channel: <span className="text-rose-500">*</span>
+              </label>
+            </div>
             <div className="relative">
               <UserIcon className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
               <input
@@ -239,8 +243,11 @@ export const LoginPage: React.FC = () => {
           </button>
         </form>
 
-        {/* Isolation & Security Information */}
-        <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 text-[11px] text-slate-600 space-y-2">
+        {/* Isolation & Security Information - Hidden per instructions */}
+        <div 
+          className="hidden p-3.5 bg-slate-50 rounded-xl border border-slate-200 text-[11px] text-slate-600 space-y-2"
+          style={{ display: 'none' }}
+        >
           <div className="flex items-start gap-2">
             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
             <span><strong>Riwayat Terisolasi:</strong> Paket konten yang Anda generate tersimpan rapi untuk akun Anda sendiri.</span>

@@ -38,17 +38,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onToggleMobile
   };
 
   return (
-    <header
-      style={{
-        height: '52px',
-        backgroundColor: 'var(--bg-overlay)',
-        backdropFilter: 'blur(20px) saturate(1.8)',
-        WebkitBackdropFilter: 'blur(20px) saturate(1.8)',
-        borderBottom: '1px solid var(--border-subtle)',
-        padding: '0 var(--space-6)',
-      }}
-      className="sticky top-0 z-40 flex items-center justify-between"
-    >
+    <header className="app-header">
       <div className="flex items-center gap-3">
         <button
           onClick={onToggleMobileMenu}

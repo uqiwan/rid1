@@ -32,7 +32,7 @@ export const OutputArea: React.FC<OutputAreaProps> = ({
   content,
   copyLabel = 'Salin',
   badge,
-  maxHeight = '280px',
+  maxHeight,
   className = ''
 }) => {
   // 2D: Empty state satu baris jika output kosong
@@ -102,7 +102,7 @@ export const OutputArea: React.FC<OutputAreaProps> = ({
           maxHeight,
           padding: '12px 14px',
         }}
-        className="overflow-y-auto"
+        className="overflow-y-auto output-textarea"
       >
         <pre
           style={{

@@ -6,6 +6,7 @@ import { DashboardSidebar } from './components/layout/DashboardSidebar';
 import { DashboardHeader } from './components/layout/DashboardHeader';
 import { GlobalToast } from './components/ui/CopyButton';
 import { OfflineIndicator } from './components/pwa/OfflineIndicator';
+import { ErrorBoundary } from './components/ui/ErrorBoundary';
 
 // Public Pages
 import { LandingPage } from './pages/public/LandingPage';
@@ -151,7 +152,9 @@ export default function App() {
           <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
             <DashboardHeader onToggleMobileMenu={() => setMobileMenuOpen(!mobileMenuOpen)} />
             <main className="flex-1">
-              {renderDashboardContent()}
+              <ErrorBoundary>
+                {renderDashboardContent()}
+              </ErrorBoundary>
             </main>
           </div>
         </div>
@@ -160,7 +163,9 @@ export default function App() {
         <div className="flex flex-col min-h-screen">
           <Header />
           <main className="flex-1">
-            {renderPublicContent()}
+            <ErrorBoundary>
+              {renderPublicContent()}
+            </ErrorBoundary>
           </main>
           <Footer />
         </div>
